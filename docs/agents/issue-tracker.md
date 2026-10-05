@@ -11,7 +11,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Apply / remove labels**: `gh issue edit --repo maxpattillo/maxpattillosite <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close --repo maxpattillo/maxpattillosite <number> --comment "..."`
 
-**Always pass `--repo maxpattillo/maxpattillosite`** (or `-R`). This clone also has an `upstream` remote (`closebotai/brycedecora`), and `gh`'s default repo points at upstream, so a bare `gh issue ...` would land in the wrong repo. Every command in this file includes it.
+**Always pass `--repo maxpattillo/maxpattillosite`** (or `-R`). `origin` is the only remote, but GitHub records this repo as a fork, and `gh` resolves its default repo per clone (`gh repo set-default`). A fresh clone can resolve to the wrong repo, so a bare `gh issue ...` is not safe. Every command in this file includes it.
 
 ## Pull requests as a triage surface
 

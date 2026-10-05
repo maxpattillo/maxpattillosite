@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "brycedecora",
+  "name": "maxpattillo",
   "compatibility_date": "2026-09-29",
 
   // Fully static Astro build: Cloudflare serves ./dist directly and no Worker
