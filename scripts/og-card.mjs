@@ -18,7 +18,6 @@ import { fileURLToPath } from 'node:url';
 
 import sharp from 'sharp';
 
-import { SHAPE, buildMap, mapToRuns } from './bean-shape.mjs';
 import { layoutText, textWidth, textHeight, ADVANCE } from './pixel-font.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,32 +25,25 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 /* ---- Palette: read, not retyped ---------------------------------------- */
 
 /**
- * Pull the light-theme tokens straight out of global.css.
+ * Pull the colour tokens straight out of global.css.
  *
- * Hard-coding six hex values here would work exactly once. The tokens are the
- * single source of truth for colour (DESIGN.md, "Palette"), and a share card
- * whose cream drifts from the site's cream is worse than no share card,
- * because nobody would ever notice.
+ * Hard-coding hex values here would work exactly once. The tokens are the
+ * single source of truth for colour, and a share card whose palette drifts
+ * from the site's is worse than no share card, because nobody would ever
+ * notice.
  *
- * Only the light theme. An OG image cannot respond to `prefers-color-scheme`,
- * and cream-and-ink is the site's primary identity, so the card commits to it.
+ * The site is dark-only, so each token has exactly one definition to find.
  */
 function readTokens() {
   const css = readFileSync(resolve(ROOT, 'src/styles/global.css'), 'utf8');
 
-  // The dark palette is duplicated further down the file, once under the media
-  // query and once under [data-theme]. Cut before the first of them so a token
-  // lookup cannot pick up a dark value.
-  const darkAt = css.indexOf('prefers-color-scheme: dark');
-  const light = darkAt === -1 ? css : css.slice(0, darkAt);
-
   return (name) => {
-    const match = light.match(
+    const match = css.match(
       new RegExp(`--color-${name}:\\s*oklch\\(([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)\\)`),
     );
     if (!match) {
       throw new Error(
-        `og-card: --color-${name} not found in the light @theme block of ` +
+        `og-card: --color-${name} not found in the @theme block of ` +
           `src/styles/global.css. If the token was renamed, rename it here too.`,
       );
     }
@@ -104,12 +96,8 @@ const token = readTokens();
 const COLOR = {
   surface: token('surface'),
   surfaceRaised: token('surface-raised'),
-  chrome: token('chrome'),
-  chromeInk: token('chrome-ink'),
   ink: token('ink'),
   accent: token('accent'),
-  field: token('field'),
-  fieldInk: token('field-ink'),
 };
 
 /* ---- Geometry ----------------------------------------------------------- */
@@ -129,7 +117,7 @@ const BORDER = 4; // the ink hairline; 1px on the page
 const PAD = 48; // content inset inside the panel
 
 const TITLEBAR_H = 64;
-const BAND_H = 110; // the full-bleed field at the foot of the panel
+const BAND_H = 110; // the inverted band at the foot of the panel
 
 const BODY_Y = PANEL.y + TITLEBAR_H;
 const BAND_Y = PANEL.y + PANEL.h - BAND_H;
@@ -158,7 +146,7 @@ const MEASURE = INNER_RIGHT - PAD - TEXT_X;
  * crop.
  *
  * So the rule is: ANYTHING THAT MUST BE READ GOES INSIDE THE SAFE ZONE.
- * Everything else -- the panel, the title bar, the field band, the mascot --
+ * Everything else -- the panel, the title bar, the band --
  * may run outside it, because those crop to a fragment of themselves rather
  * than to a fragment of a word. A sliced title bar still reads as a title bar.
  *
@@ -242,22 +230,6 @@ const text = (card, str, x, y, scale, fill) => {
   card.parts.push(`<path d="${d}" fill="${fill}"/>`);
 };
 
-/** The bean, at `scale` device pixels per map pixel. */
-const bean = (card, x, y, scale, fill, extra = '') => {
-  const d = mapToRuns(buildMap(SHAPE))
-    .map(({ x: bx, y: by, w }) => {
-      const px = x + bx * scale;
-      const py = y + by * scale;
-      const pw = w * scale;
-      return `M${px} ${py}h${pw}v${scale}h-${pw}z`;
-    })
-    .join('');
-  card.parts.push(`<path d="${d}" fill="${fill}"${extra}/>`);
-};
-
-/** Bean footprint in device pixels at a given scale. Square, by construction. */
-const beanSize = (scale) => SHAPE.w * scale;
-
 /**
  * A dotted leader, as in a table of contents (DESIGN.md, "Texture").
  *
@@ -294,7 +266,7 @@ const centerX = (width) => CENTER_X - Math.round(width / 2);
 
 /**
  * Everything every card has: the page, the hard shadow, the panel, the title
- * bar, and the dithered field at the foot.
+ * bar, and the inverted band at the foot.
  *
  * The caller fills the body between `BODY_Y` and `BAND_Y` and supplies the
  * band's own line of text.
@@ -308,10 +280,10 @@ function drawShell(card, { titleBarLeft, titleBarRight, bandText }) {
 
   // Panel body, then the title bar over its top edge.
   rect(card, PANEL.x, PANEL.y, PANEL.w, PANEL.h, COLOR.surfaceRaised);
-  rect(card, PANEL.x, PANEL.y, PANEL.w, TITLEBAR_H, COLOR.chrome);
+  rect(card, PANEL.x, PANEL.y, PANEL.w, TITLEBAR_H, COLOR.ink);
 
   const barY = PANEL.y + (TITLEBAR_H - textHeight(SCALE.titleBar)) / 2;
-  text(card, titleBarLeft, INNER_X + 16, barY, SCALE.titleBar, COLOR.chromeInk);
+  text(card, titleBarLeft, INNER_X + 16, barY, SCALE.titleBar, COLOR.surface);
   if (titleBarRight) {
     text(
       card,
@@ -319,11 +291,11 @@ function drawShell(card, { titleBarLeft, titleBarRight, bandText }) {
       INNER_RIGHT - 16 - textWidth(titleBarRight, SCALE.titleBar),
       barY,
       SCALE.titleBar,
-      COLOR.chromeInk,
+      COLOR.surface,
     );
   }
 
-  /* ---- The field band -------------------------------------------------- */
+  /* ---- The band ------------------------------------------------------- */
 
   const band = { x: INNER_X, y: BAND_Y, w: INNER_RIGHT - INNER_X, h: BAND_H };
 
@@ -332,46 +304,7 @@ function drawShell(card, { titleBarLeft, titleBarRight, bandText }) {
     `<g clip-path="url(#band)">`,
   );
 
-  rect(card, band.x, band.y, band.w, band.h, COLOR.field);
-
-  /*
-   * The dither. The field's only texture -- there is no gradient anywhere in
-   * this file, which is DESIGN.md's first colour prohibition.
-   *
-   * The cell is 24px, three times the 8px cell in global.css. At 1:1 that is
-   * wrong; at the size anyone actually sees this it is right. Slack, LinkedIn
-   * and X all render an unfurl around a third of full width, and an 8px cell
-   * with 1px dots resamples into flat grey noise at that scale. 24px survives
-   * the downscale as the 8px cell it is imitating.
-   */
-  const DITHER_CELL = 24;
-  const DITHER_DOT = 3;
-  // The same eight positions as --dither-cell, on its 8x8 grid.
-  const points = [
-    [0, 0],
-    [4, 0],
-    [2, 2],
-    [6, 2],
-    [0, 4],
-    [4, 4],
-    [2, 6],
-    [6, 6],
-  ];
-
-  const cells = points
-    .map(([dx, dy]) => {
-      const x = (dx / 8) * DITHER_CELL;
-      const y = (dy / 8) * DITHER_CELL;
-      return `M${x} ${y}h${DITHER_DOT}v${DITHER_DOT}h-${DITHER_DOT}z`;
-    })
-    .join('');
-
-  card.parts.push(
-    `<pattern id="dither" width="${DITHER_CELL}" height="${DITHER_CELL}" patternUnits="userSpaceOnUse">`,
-    `<path d="${cells}" fill="${COLOR.fieldInk}" fill-opacity="0.3"/>`,
-    `</pattern>`,
-  );
-  rect(card, band.x, band.y, band.w, band.h, 'url(#dither)');
+  rect(card, band.x, band.y, band.w, band.h, COLOR.ink);
 
   text(
     card,
@@ -379,7 +312,7 @@ function drawShell(card, { titleBarLeft, titleBarRight, bandText }) {
     TEXT_X,
     band.y + (band.h - textHeight(SCALE.field)) / 2,
     SCALE.field,
-    COLOR.fieldInk,
+    COLOR.surface,
   );
 
   return { band, closeShell: () => card.parts.push('</g>') };
@@ -496,34 +429,6 @@ export function renderDefaultCard() {
     bandText: 'AI systems that handle sales conversations',
   });
 
-  /*
-   * THE MASCOT MOVED TO THE BAND.
-   *
-   * It used to sit in the body at 270px, filling the space a left-weighted
-   * display block opened up. Once the type is centred there is no such space:
-   * the margins fall on BOTH sides of the name, and a bean in one of them
-   * un-centres the thing we just centred.
-   *
-   * So it drops to the band, whole, at the same 90px stamp the article card
-   * uses. That costs the two cards a point of difference -- DESIGN.md had the
-   * default's mascot "loud" and the article's quiet -- and the registers now
-   * part on the display type alone: a name set at a fixed 15, against a title
-   * auto-fitted to 12 or smaller. The alternative was stacking the bean above
-   * the name inside a 360px body, which forced the name down to scale 13 and
-   * left 5px of air top and bottom. Cramped, to keep a mascot in a thumbnail
-   * where the name is the only thing anyone reads.
-   *
-   * Drawn before closeShell() so the band's clip path contains it.
-   */
-  const beanScale = 6;
-  const beanPx = beanSize(beanScale);
-  bean(
-    card,
-    band.x + band.w - PAD - beanPx,
-    band.y + (band.h - beanPx) / 2,
-    beanScale,
-    COLOR.fieldInk,
-  );
   closeShell();
 
   const kickerY = BODY_Y + 44;
@@ -540,7 +445,7 @@ export function renderDefaultCard() {
    * that drifted. Two symmetric flanks are what make the centring deliberate,
    * and they are the one element wide enough to hold the full width of the
    * card -- without them the body is three short lines marooned in the middle
-   * of 1048px of cream.
+   * of 1048px of empty panel.
    */
   const leaderY = kickerY + textHeight(SCALE.kicker) - SCALE.kicker;
   leaderBack(card, TEXT_X, kickerX - 24, leaderY, SCALE.kicker, COLOR.accent);
@@ -562,10 +467,9 @@ export function renderDefaultCard() {
  * An article's card. The title is the hero; the name moves to the band.
  *
  * This is the same two-register split the site itself uses (DESIGN.md,
- * "Layout registers"): on the default card the name is the display type and
- * the mascot is enormous, because the card is selling. Here the article's
- * title takes the display slot and the bean drops to a quiet mark in the
- * band, because the thing being shared is the writing.
+ * "Layout registers"): on the default card the name is the display type,
+ * because the card is introducing the site. Here the article's title takes
+ * the display slot, because the thing being shared is the writing.
  *
  * `title` is the page's real `<h1>`, read out of the build manifest by
  * generate-og.mjs -- not re-derived from frontmatter. The card and the page
@@ -579,17 +483,6 @@ export function renderArticleCard({ title }) {
     bandText: 'Bryce DeCora · Co-founder, CloseBot',
   });
 
-  // A quiet bean, whole, at the band's right edge. One mascot per card --
-  // "a bean in every corner stops being a signature".
-  const beanScale = 6;
-  const beanPx = beanSize(beanScale);
-  bean(
-    card,
-    band.x + band.w - PAD - beanPx,
-    band.y + (band.h - beanPx) / 2,
-    beanScale,
-    COLOR.fieldInk,
-  );
   closeShell();
 
   const kickerY = BODY_Y + 44;

@@ -1,21 +1,18 @@
 /**
- * A 5x7 bitmap typeface, drawn in the same material as the mascot.
+ * A 5x7 bitmap typeface.
  *
- * WHY NOT IBM PLEX. The share card is rasterised by sharp, which renders SVG
- * through librsvg, which resolves `<text>` against *system* fonts. Plex is not
- * installed on a CI runner and probably not on the next machine that runs
- * `pnpm og`, so a `<text>` element would silently fall back to whatever
- * grotesque the host has -- and DESIGN.md's first typographic prohibition is
- * exactly that face. An image that renders differently depending on who
- * generated it is not a design system asset.
+ * WHY NOT A REAL FONT. The share card is rasterised by sharp, which renders SVG
+ * through librsvg, which resolves `<text>` against *system* fonts. Whatever face
+ * the site uses is not installed on a CI runner and probably not on the next
+ * machine that runs `pnpm og`, so a `<text>` element would silently fall back
+ * to whatever grotesque the host has. An image that renders differently
+ * depending on who generated it is not a design system asset.
  *
- * Embedding Plex properly means shipping a font file and a text-to-path
+ * Embedding a font properly means shipping a font file and a text-to-path
  * library, i.e. a new dependency and a licence question, to set eleven words.
  *
- * So the card sets its type the way the site draws its mascot: square pixels on
- * a grid, no curves, no anti-aliasing. That is not a workaround dressed up as a
- * decision -- the alternative was a third typeface on a site that permits two,
- * and 1-bit pixel type is already the house material.
+ * So the card sets its type as square pixels on a grid, no curves, no
+ * anti-aliasing. Identical output on every machine is the point.
  *
  * UPPERCASE ONLY, deliberately. Every string on the card is in the mono/kicker
  * register, which is uppercase anyway, so lowercase glyphs would be forty

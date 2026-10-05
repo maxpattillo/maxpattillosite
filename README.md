@@ -69,7 +69,6 @@ the test suite work without it.
 | `pnpm test:lighthouse` | Performance / a11y / SEO budgets. |
 | `pnpm serve` | Serve `dist/` exactly as Cloudflare will. |
 | `pnpm og` | Regenerate the social share cards. Builds first. |
-| `pnpm bean` | Regenerate the mascot (CSS sprite + favicon). |
 | `pnpm deploy` | Build and deploy via Wrangler. |
 
 ## How it fits together
@@ -199,7 +198,7 @@ data and a byline all pointing at them. Change these first:
 | Worker name | `wrangler.jsonc` |
 | Security contact | `public/.well-known/security.txt` |
 
-Then run `pnpm bean && pnpm og` to regenerate the mascot and share cards from
+Then run `pnpm og` to regenerate the share cards from
 your own values, and `pnpm test`.
 
 ## License

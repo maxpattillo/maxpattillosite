@@ -1,17 +1,23 @@
 ---
 /**
- * The full catalogue.
+ * The Article index.
  *
  * While nothing is published the page says so plainly and offers the feed, so
  * an empty section reads as early rather than broken, and someone who wants
  * the first Article can subscribe before it exists.
  */
 import PageLayout from '../../layouts/PageLayout.astro';
-import CardCatalog from '../../components/writing/CardCatalog.astro';
 import { person } from '../../data/person';
-import { getPublishedArticles } from '../../utils/collections';
+import { articlePath, getPublishedArticles } from '../../utils/collections';
 
 const articles = await getPublishedArticles();
+
+const dateFormat = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
 
 /*
  * Branches with the body, so the search snippet cannot keep saying "nothing
@@ -36,7 +42,23 @@ const description =
     articles.length === 0 ? (
       <p class="text-ink-muted">Nothing here yet.</p>
     ) : (
-      <CardCatalog articles={articles} headingLevel={2} class="mt-12" />
+      <ul class="mt-12 space-y-10">
+        {articles.map((article) => (
+          <li>
+            <h2 class="text-heading">
+              <a href={articlePath(article.id)} class="text-ink no-underline hover:text-accent-hover">
+                {article.data.title}
+              </a>
+            </h2>
+            <p class="kicker mt-2">
+              <time datetime={article.data.pubDate.toISOString()}>
+                {dateFormat.format(article.data.pubDate)}
+              </time>
+            </p>
+            <p class="mt-2 text-ink-muted">{article.data.description}</p>
+          </li>
+        ))}
+      </ul>
     )
   }
 

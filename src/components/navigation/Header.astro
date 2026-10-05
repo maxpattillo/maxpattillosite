@@ -16,7 +16,6 @@
  * <details>/<summary> disclosure -- still zero JS. An island is the last
  * resort, not the first.
  */
-import ThemeToggle from '../ui/ThemeToggle.astro';
 import { primaryNav } from '../../data/navigation';
 import { SITE_NAME } from '../../data/site';
 import { isActivePath } from '../../utils/urls';
@@ -30,10 +29,8 @@ const current = Astro.url.pathname;
   softening borders is the fastest route back to a generic site.
 */}
 {/*
-  Sticky so navigation stays reachable through a long article. It was
-  originally made sticky to host a reading-progress bean that rolled along the
-  bottom hairline; that moved to the brew column in the margin, but keeping
-  the nav in reach on a page you scroll for several screens stands on its own.
+  Sticky so navigation stays reachable through a long article you scroll for
+  several screens.
 */}
 <header class="sticky top-0 z-50 border-b border-line bg-surface">
   <div
@@ -46,9 +43,8 @@ const current = Astro.url.pathname;
       {SITE_NAME}
     </a>
 
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-      <nav aria-label="Primary">
-        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <nav aria-label="Primary">
+      <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
         {
           primaryNav.map((item) => {
             const active = isActivePath(item.href, current);
@@ -74,10 +70,7 @@ const current = Astro.url.pathname;
             );
           })
         }
-        </ul>
-      </nav>
-
-      <ThemeToggle />
-    </div>
+      </ul>
+    </nav>
   </div>
 </header>

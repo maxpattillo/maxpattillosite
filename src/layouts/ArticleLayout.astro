@@ -12,7 +12,6 @@
  */
 import BaseLayout from './BaseLayout.astro';
 import type { HeadedLayoutProps } from './types';
-import BrewColumn from '../components/ui/BrewColumn.astro';
 import { person } from '../data/person';
 import { buildArticle, type JsonLdNode } from '../utils/schema';
 
@@ -122,15 +121,6 @@ const dateFormat = new Intl.DateTimeFormat('en-US', {
           </ul>
         )
       }
-
-      {/*
-        The brew column brews as the article is read. Sticky so it stays in
-        view for the whole piece, and only on wide screens where the rail
-        actually exists. See BrewColumn.astro.
-      */}
-      <div class="sticky top-24 mt-12 hidden lg:block">
-        <BrewColumn />
-      </div>
     </div>
 
     <div class="prose lg:col-start-2 lg:row-start-2">

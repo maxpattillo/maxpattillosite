@@ -37,8 +37,8 @@ export const SOURCE_REPO_URL = 'https://github.com/maxpattillo/maxpattillosite';
  * `tests/seo/metadata.spec.ts` checks that it was actually emitted to `dist/`.
  *
  * GENERATED, AND COMMITTED. Built by `scripts/generate-og.mjs` (`pnpm og`) from
- * the same design tokens and the same bean as the site itself. Do not edit the
- * PNG by hand; edit the generator and re-run it.
+ * the same design tokens as the site itself. Do not edit the PNG by hand; edit
+ * the generator and re-run it.
  */
 export const DEFAULT_OG_IMAGE = '/og/default.png';
 
