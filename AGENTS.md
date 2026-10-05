@@ -15,8 +15,8 @@ Most of what follows is **mechanically enforced** — see [What is actually
 enforced](#what-is-actually-enforced). Rules that are not enforced are marked
 _(judgement)_ and need a human.
 
-Visual decisions live in [DESIGN.md](./DESIGN.md). Much less of that file is
-enforceable, which makes it easier to erode and no less binding.
+Visual decisions live in [DESIGN.md](./DESIGN.md). For now it records the
+agreed direction only; the full system is pending a prototype.
 
 ---
 
@@ -90,7 +90,7 @@ bound is a reasonable change. Removing the minimums is not.
   `build.format: 'directory'` and `trailingSlash: 'always'` in
   `astro.config.ts`, and `html_handling: "force-trailing-slash"` in
   `wrangler.jsonc`.
-- Internal links must already be in canonical form. Linking to `/about` costs a
+- Internal links must already be in canonical form. Linking to `/writing` costs a
   redirect before the page is served.
 - Never expose `.html` in a URL.
 - Never create two indexable routes serving the same content.
@@ -104,7 +104,7 @@ Use Astro's `<Image />`. It emits width, height, and a responsive `srcset` in
 modern formats automatically — which is why the rule is "use the component",
 not "remember to add dimensions".
 
-Image files live in `src/assets/` — article imagery in `src/assets/media/`,
+Image files live in `src/assets/` — Article imagery in `src/assets/media/`,
 managed by the Media app in the dev toolbar. Never `public/`, which is copied
 verbatim and therefore arrives with no dimensions at all. See
 [Adding images](#adding-images).
@@ -146,40 +146,28 @@ verbatim and therefore arrives with no dimensions at all. See
 
 ## Performance and JavaScript
 
-**The hydration budget is three scripts per page**, enforced by
-`javascript.spec.ts`. It was zero. The three are:
+**The hydration budget is one script per page**, enforced by
+`javascript.spec.ts`. Astro ships no JavaScript by default, so the budget
+starts at zero and every script is a deliberate decision. The one is the
+**CloseBot chat widget** — `async`, and the one third-party script on the site.
+See below.
 
-1. The **theme bootstrap** in `BaseLayout.astro` — on every page, `is:inline`
-   so it runs before first paint. It is what makes a light/dark toggle possible
-   at all: CSS cannot remember a choice across a navigation, so a CSS-only
-   toggle would reset on every click-through.
-2. The **CloseBot chat widget** — `async`, and the one third-party script on
-   the site. See below. It renders only when `CLOSEBOT_SOURCE` is set at build
-   time, so a checkout without that variable legitimately ships **two**
-   scripts, not three. The id is kept out of the repository so a fork cannot
-   silently load someone else's agent; `tests/e2e/no-js.spec.ts` derives the
-   expected count from whether the widget is present rather than hard-coding
-   three, which keeps the assertion exact either way.
-3. The **widget callout** (`src/components/ui/WidgetCallout.astro`) — on every
-   page. It has to know whether the third-party widget is open, and that state
-   exists only as inline styles inside `cb.js`. It is also correct for it to be
-   absent without JS, since the widget it points at is script-driven too.
+It renders only when `CLOSEBOT_SOURCE` is set at build time, so a checkout
+without that variable legitimately ships **zero** scripts, not one. The id is
+kept out of the repository so a fork cannot silently load someone else's agent.
+`tests/e2e/no-js.spec.ts` derives the expected count from whether the widget is
+present rather than hard-coding one, which keeps the assertion exact either way.
 
-The budget **was four**. `CLOCK TOOL 1.1` held the fourth slot — a homepage
-ornament that ticked a server-rendered build timestamp — and when it was
-removed the budget came down with it in the same commit. That direction matters:
-a number that only ever ratchets upward stops being a budget, because the next
-island silently inherits whatever headroom the last one left behind.
-
-That budget is a ceiling, not a target, and right now there is no slack in it
-at all: every page spends exactly three. `tests/e2e/no-js.spec.ts` asserts the
-count per path, so a fourth script on any single page fails there.
+That budget is a ceiling, not a target, and with the widget configured there is
+no slack in it. `tests/e2e/no-js.spec.ts` asserts the count per path, so a
+second script on any single page fails there.
 
 ### The third-party script
 
 "Avoid third-party scripts" still stands, and the CloseBot widget is the single
-deliberate exception: it is the site owner's own product, which is a different
-trade from an analytics tag or a font CDN.
+deliberate exception: it is the Owner's own agent, built on the product of
+CloseBot, the Owner's employer. That is a different trade from an analytics tag
+or a font CDN.
 
 The terms of the exception:
 
@@ -192,10 +180,9 @@ The terms of the exception:
   origin fails that test even if the total script count does not change — which
   is what actually stops an analytics tag arriving later.
 
-Note also that no framework integration is installed — both are bare
-`<script>` tags in `.astro` files, which is why they cost a few dozen lines
-rather than a rendering runtime. Adding a `client:*` directive would mean
-installing one, and that is a much larger decision than either of these was.
+No framework integration is installed — the widget is a bare `<script>` tag in
+`BaseLayout.astro`, not an island. Adding a `client:*` directive would mean
+installing one, and that is a much larger decision than the widget was.
 
 A `client:*` directive is justified only when the interaction cannot reasonably
 be built with native HTML and CSS. Before reaching for one:
@@ -206,47 +193,30 @@ be built with native HTML and CSS. Before reaching for one:
 3. Only then, an island — and the narrowest one possible. Hydrate the widget,
    never the page.
 
-The header is the worked example: it has no mobile-menu island because its two
-primary links fit on a phone, and if they stopped fitting the next step would
-be `<details>`, not React.
-
-It grew a social row (LinkedIn, Instagram, Facebook) without changing that
-answer. Five links plus a wordmark and a toggle do **not** fit a 375px phone —
-they wrap to three lines, and the header is `sticky`, so those lines would cost
-a fixed slice of every viewport for the whole scroll. The row is hidden below
-`md` in CSS. That is only legitimate because the footer carries the same three
-links on every page, so nothing is unreachable on a phone; hiding a link that
-exists nowhere else would be a different and worse decision.
+The header is the worked example: it has no mobile-menu island because the
+name and its one primary link fit on a phone, and if they stopped fitting the
+next step would be `<details>`, not React. Social profiles and the source link
+live in the footer only; the header is `sticky`, so every line it wraps to
+costs a fixed slice of every viewport for the whole scroll.
 
 If you do add an island, raise `MAX_SCRIPTS_PER_PAGE` in
 `tests/seo/javascript.spec.ts` **in the same commit**, with a comment saying
-why. Never as a follow-up fix to a red build.
+why. Never as a follow-up fix to a red build. Lower it the same way when a
+script goes: a number that only ever ratchets upward stops being a budget,
+because the next island silently inherits whatever headroom the last one left
+behind.
 
 Also: avoid third-party scripts, avoid layout shift, avoid render-blocking
 resources.
 
-### The web font decision
+### Web fonts
 
-The rule used to read "no web fonts without a deliberate decision". This is that
-decision, recorded so nobody has to reconstruct it.
-
-The site self-hosts **IBM Plex Sans** (400/600) and **IBM Plex Mono** (400),
-Latin subset only, configured in `fonts` in `astro.config.ts`. The reasoning:
-typography is the single largest differentiator available to a site with no
-imagery, and the system stack renders the site as something nobody chose. See
-[DESIGN.md](./DESIGN.md).
-
-What keeps the cost honest:
-
-- Astro's Fonts API subsets the faces and **inlines** the `@font-face` rules, so
-  there is no stylesheet round-trip.
-- `optimizedFallbacks` generates a metric-matched fallback, so nothing shifts
-  while the face swaps. This is the part that makes `display: swap` safe.
-- Only the sans is preloaded. Mono sets 11px labels; a swap there is invisible.
-- Lighthouse CI is the backstop. Performance is still held at ≥ 0.9, and the
-  fonts are the first thing to cut if it ever drops.
-
-Adding a **third** family is not covered by this decision and needs its own.
+No web font is loaded; the placeholder styling uses system stacks. The agreed
+direction names Space Grotesk and JetBrains Mono, and the decision to load
+them — subsetting, preloading, fallbacks, and what it costs against the
+Lighthouse budget — belongs to the pending design work. See
+[DESIGN.md](./DESIGN.md). Until that lands, adding a web font is not covered by
+any decision here.
 
 ## Accessibility
 
@@ -285,27 +255,25 @@ the writing.
 
 ### Writing about CloseBot
 
-Articles here regularly touch the company Bryce co-founded. Two rules, and the
-first is not negotiable.
+Articles here will regularly touch CloseBot, where the Owner works. Two rules,
+and the first is not negotiable.
 
-**Disclose in the article, not just sitewide.** The first time a piece
-references CloseBot, say the relationship in the prose — "I co-founded
-CloseBot", "the company I co-founded". The header and About page already make
-it obvious, but an article read in a feed reader, an AI answer, or a syndicated
-excerpt arrives without them.
+**Disclose in the Article, not just sitewide.** The first time a piece
+references CloseBot, say the relationship in the prose — "I work at CloseBot",
+"I'm a developer at CloseBot". An Article read in a feed reader, an AI answer,
+or a syndicated excerpt arrives without any surrounding page to explain it.
 
 This is not a compliance tax. First-hand experience is the one E-E-A-T signal
-that cannot be manufactured, and it is the site's entire advantage over the
-vendor blogs occupying these queries. Hiding the relationship throws it away
-and turns an honest founder essay into something that reads like undisclosed
+that cannot be manufactured, and it is the site's advantage over the vendor
+blogs occupying these queries. Hiding the relationship throws it away and turns
+an honest account from the inside into something that reads like undisclosed
 promotion when someone works it out.
 
 **Link where a link helps the reader, and nowhere else.** A link to a CloseBot
 page is appropriate when it is the natural next step for someone who has just
 read the argument. It is not appropriate as a quota. Google's link spam policy
-does not prohibit linking to your own properties; it prohibits links whose
-purpose is ranking rather than the reader, and the difference is visible in the
-writing.
+does not prohibit linking to your employer; it prohibits links whose purpose is
+ranking rather than the reader, and the difference is visible in the writing.
 
 Never invent a metric. Use CloseBot's published figures or third-party data
 with attribution. A number nobody can check is worth less than no number, and
@@ -364,37 +332,47 @@ thing that fails when it is broken.
 | --- | --- |
 | Valid SEO object on every page | `seoInputSchema` via `BaseLayout` — build fails |
 | Title/description present, bounded, unique | `tests/seo/metadata.spec.ts` |
+| Homepage title and description are the agreed ones | `tests/seo/metadata.spec.ts` |
 | One self-referencing canonical per page | `tests/seo/metadata.spec.ts` |
 | Full Open Graph set; `og:image` actually exists | `tests/seo/metadata.spec.ts` |
-| Share cards match the articles they title | `tests/seo/og-cards.spec.ts` |
-| Every article has its own share card | `tests/seo/og-cards.spec.ts` |
+| Default share card matches the generator | `tests/seo/og-cards.spec.ts` |
+| Share cards match the Articles they title | `tests/seo/og-cards.spec.ts` |
 | Declared `og:image` dimensions match the file | `tests/seo/og-cards.spec.ts` |
-| Exactly one descriptive `h1` | `tests/seo/headings.spec.ts` |
+| Exactly one descriptive `h1`; the homepage's is the Owner's name | `tests/seo/headings.spec.ts` |
 | Heading hierarchy never skips a level | `tests/seo/headings.spec.ts` |
 | No broken internal links | `tests/seo/links.spec.ts` |
 | No internal links to redirects | `tests/seo/links.spec.ts` |
 | No hard-coded domain in links | `tests/seo/links.spec.ts` |
+| No links to removed routes (`/about/`, `/thanks/`) | `tests/seo/links.spec.ts` |
 | No orphaned or weakly-linked pages | `tests/seo/links.spec.ts` |
+| Social profile URLs are absolute and https | `tests/seo/links.spec.ts` |
+| No Origin-project residue in built pages | `tests/seo/links.spec.ts` — **pending #5**, not yet written |
 | Every image declares `alt` | `tests/seo/images.spec.ts` |
 | Every image declares dimensions | `tests/seo/images.spec.ts` |
 | LCP image not lazy-loaded | `tests/seo/images.spec.ts` |
 | JSON-LD parses; `@id`s resolve | `tests/seo/structured-data.spec.ts` |
 | One Person/WebSite `@id` site-wide | `tests/seo/structured-data.spec.ts` |
+| Person `sameAs` matches the footer's profiles | `tests/seo/structured-data.spec.ts` |
+| Person claims no role or employer | `tests/seo/structured-data.spec.ts` |
 | No fabricated schema types | `tests/seo/structured-data.spec.ts` |
 | Breadcrumb schema matches a visible trail | `tests/seo/structured-data.spec.ts` |
 | No accidental `noindex` | `tests/seo/indexability.spec.ts` |
 | Sitemap agrees with indexability | `tests/seo/indexability.spec.ts` |
-| Client JavaScript within budget | `tests/seo/javascript.spec.ts` |
-| Trailing-slash redirect works at the edge | `tests/e2e/edge.spec.ts` |
-| Unknown URLs return a real 404 | `tests/e2e/edge.spec.ts` |
-| Site works with JavaScript disabled | `tests/e2e/no-js.spec.ts` |
-| Feed lists exactly the published articles | `tests/seo/feed.spec.ts` |
+| Client JavaScript within budget (1) | `tests/seo/javascript.spec.ts` |
+| Lighthouse budget URLs exist in the build | `tests/seo/lighthouse-urls.spec.ts` |
+| Feed lists exactly the published Articles | `tests/seo/feed.spec.ts` |
 | Feed is discoverable from every page | `tests/seo/feed.spec.ts` |
-| Related links resolve to real entries | `reference()` in `src/content.config.ts` |
-| Cover images have alt text | content schema refinement |
-| Type safety | `astro check` |
 | No dev-only tooling in `dist/` | `tests/seo/dev-only.spec.ts` |
 | Build stays purely static | `tests/seo/dev-only.spec.ts` |
+| Trailing-slash redirect works at the edge | `tests/e2e/edge.spec.ts` |
+| Unknown and removed URLs return a real 404 | `tests/e2e/edge.spec.ts` |
+| Site works with JavaScript disabled | `tests/e2e/no-js.spec.ts` |
+| Only the CloseBot widget, and only its origin, ships script | `tests/e2e/no-js.spec.ts` |
+| Every page renders dark, whatever the system preference | `tests/e2e/no-js.spec.ts` |
+| Pages fit a 375px phone; the header stays one line | `tests/e2e/mobile.spec.ts` |
+| Related links resolve to real Articles | `reference()` in `src/content.config.ts` |
+| Cover images have alt text | content schema refinement |
+| Type safety | `astro check` |
 | Performance / accessibility budgets | Lighthouse CI |
 
 Everything marked _(judgement)_ above is **not** on this list. That is the
@@ -413,18 +391,16 @@ pnpm test:seo     # SEO assertions against the build manifest (fast)
 pnpm test:e2e     # Playwright against wrangler dev (real Workers runtime)
 pnpm serve        # serve dist exactly as Cloudflare will
 
-pnpm bean         # regenerate the mascot (CSS sprite + favicon)
 pnpm og           # regenerate the social share cards (builds first)
 ```
 
-`bean` and `og` are **not** part of the build. Both write committed assets from
-a single source — the bean's geometry lives in `scripts/bean-shape.mjs` and both
-generators import it — so the deploy has no generation step and no new
-dependency. Run them by hand and commit the output in the same change.
+`og` is **not** part of the build. It writes committed PNGs into `public/og/`,
+so the deploy has no generation step and no new dependency. Run it by hand and
+commit the output in the same change.
 
-`og` builds first, because each article's card is titled from that page's real
+`og` builds first, because each Article's card is titled from that page's real
 `<h1>` in `.seo/manifest.json` rather than from frontmatter. **After changing
-an article title the loop is `build → og → build`**: the second build is what
+an Article title the loop is `build → og → build`**: the second build is what
 copies the regenerated PNG out of `public/`. `tests/seo/og-cards.spec.ts`
 re-renders every card and fails if one is stale, so skipping a step is caught
 rather than shipped.
@@ -432,10 +408,10 @@ rather than shipped.
 Always run `pnpm test` before committing. `pnpm test:seo` requires a build —
 it asserts against real output, not source.
 
-### Editing articles in the browser
+### Editing Articles in the browser
 
 `pnpm dev` adds an **Edit article** app to the dev toolbar. Open any page under
-`/writing/`, toggle it, and the panel loads that entry's raw frontmatter and
+`/writing/`, toggle it, and the panel loads that Article's raw frontmatter and
 Markdown. Save writes the file and the page behind reloads.
 
 Two textareas of raw text, not parsed fields and not a rich editor. Anything
@@ -466,7 +442,7 @@ out.
 
 `pnpm dev` also adds a **Media** app to the dev toolbar. It browses
 `src/assets/media/`, imports files into it, stores the alt text and title for
-each one, and hands Markdown to the article editor. Same four-layer dev-only
+each one, and hands Markdown to the Article editor. Same four-layer dev-only
 argument as the editor, and the same `tests/seo/dev-only.spec.ts` proof that
 none of it reaches `dist/`.
 
@@ -493,12 +469,12 @@ editable because the pipeline decides the rest — correctly:
 If a field feels missing, check that table before adding one. There is nothing
 else an `<img>` on this site carries.
 
-**The first image in an article must be the cover.** Markdown emits
+**The first image in an Article must be the cover.** Markdown emits
 `loading="lazy"` unconditionally and offers no way to override it, while
 `images.spec.ts` fails any page whose first `<img>` is lazy. So a body image in
-an article with no cover breaks the build — not at save time, at `pnpm test`.
+an Article with no cover breaks the build — not at save time, at `pnpm test`.
 The panel knows this and refuses the insert, pointing at **Use as cover**,
-which the article layout loads eagerly with `fetchpriority="high"`.
+which the Article layout loads eagerly with `fetchpriority="high"`.
 
 Two smaller decisions worth knowing:
 
@@ -510,13 +486,13 @@ Two smaller decisions worth knowing:
   repository would carry forever and the pipeline would discard anyway.
 
 There is no delete. An image the panel shows as `unused` is one `git rm` away
-from gone, and one that reports which articles reference it is telling you what
+from gone, and one that reports which Articles reference it is telling you what
 would break — which is more useful than a button that has to re-derive the same
 answer before it is safe to press.
 
 `src/assets/media/` is excluded from Vite's file watcher. Writing image
 metadata must not be able to reload the page, because that would discard
-unsaved prose in the article editor.
+unsaved prose in the Article editor.
 
 ### Auditing the whole site
 
@@ -533,8 +509,8 @@ weakly-linked pages, thin metadata — instead of opening pages one at a time.
    schema validates it and the route generates itself.
 2. Standalone page → copy `templates/page.astro` into `src/pages/`.
 3. Link to it from at least two places, or allowlist it.
-4. For an article, run `pnpm og` to draw its share card, then commit the PNG.
-   A new article has no card until you do, and its `og:image` will 404.
+4. For an Article, run `pnpm og` to draw its share card, then commit the PNG.
+   A new Article has no card until you do, and its `og:image` will 404.
 5. Run `pnpm test`.
 
 The templates carry the structural conventions inline. Start from them rather
@@ -543,10 +519,10 @@ than copying an existing page, which propagates whatever that page got wrong.
 ### Before launch
 
 - [x] ~~Fill in `sameAs` in `src/data/person.ts` with verified profile URLs~~ —
-      LinkedIn, Instagram, Facebook. X is deliberately absent; read the note on
-      `socialProfiles` before adding one
-- [x] ~~Replace `public/og/default.png` with a designed share image~~ — generated
-      by `pnpm og`; see "The share card" in [DESIGN.md](./DESIGN.md)
-- [ ] Replace the placeholder copy on `/about/` and the project entries
-- [ ] Confirm `SITE_URL` matches the domain actually being deployed
+      GitHub. Read the note on `socialProfiles` before adding another
+- [x] ~~Confirm `SITE_URL` matches the domain actually being deployed~~ —
+      `https://maxpattillo.com`
 - [ ] Verify the site in Google Search Console and submit the sitemap
+- [ ] Add the Owner's LinkedIn to `socialProfiles` once verified
+- [ ] Choose a public contact email; until then the Person has no `email` and
+      there is no `security.txt`
