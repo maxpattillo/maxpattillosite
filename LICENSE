@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2026 Bryce DeCora
+Copyright (c) 2026 Max Pattillo
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,15 +31,14 @@ configuration, and the documentation describing them.
 
 It does NOT include the editorial content and personal likeness in this
 repository. The following are excluded from the grant above and remain
-All Rights Reserved, Copyright (c) 2026 Bryce DeCora:
+All Rights Reserved, Copyright (c) 2026 Max Pattillo:
 
     src/content/                     the written articles
-    src/assets/bryce-decora.png      photograph of the author
     src/assets/media/                article imagery, including third-party
-                                     product screenshots that are not the
-                                     author's to sublicense
-    public/og/                       generated share cards bearing the
-                                     author's name and likeness
+                                     product screenshots that are not
+                                     Max Pattillo's to sublicense
+    public/og/                       generated share cards bearing
+                                     Max Pattillo's name
 
 You may read these, and they necessarily remain present in a clone or fork.
 You may not republish, redistribute, or create derivative works from them.
@@ -50,6 +50,6 @@ This carve-out is not a restriction on using the project. Nothing in it is
 needed to run, modify, deploy, or sell work built on this codebase.
 
 NO TRADEMARK OR PUBLICITY RIGHTS. This license grants rights under copyright
-only. It does not grant permission to use the name "Bryce DeCora", the name
+only. It does not grant permission to use the name "Max Pattillo", the name
 "CloseBot", or either party's marks, branding, or identity, including in a way
 that suggests endorsement or authorship of your own deployment.

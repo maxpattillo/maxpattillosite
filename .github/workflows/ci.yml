@@ -28,10 +28,11 @@ concurrency:
 permissions:
   contents: read
 
-# The CloseBot widget's account id. A *variable*, not a secret -- it is served
-# to every visitor inside a <script src>, so it is public by construction. It
-# is set here only so CI builds the same pages production does; without it the
-# widget is omitted and the e2e suite adapts rather than failing.
+# The id of the Owner's own CloseBot agent, which the chat widget loads. A
+# *variable*, not a secret -- it is served to every visitor inside a
+# <script src>, so it is public by construction. It is set here only so CI
+# builds the same pages production does; without it the widget is omitted and
+# the e2e suite adapts rather than failing.
 env:
   CLOSEBOT_SOURCE: ${{ vars.CLOSEBOT_SOURCE }}
 

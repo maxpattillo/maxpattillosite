@@ -13,7 +13,7 @@ a design file is where an agent falls back to defaults.
 
 ### Issue tracker
 
-GitHub Issues on `maxpattillo/maxpattillosite` (origin, not upstream). Always pass `--repo`. See `docs/agents/issue-tracker.md`.
+GitHub Issues on `maxpattillo/maxpattillosite` (origin). Always pass `--repo`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
