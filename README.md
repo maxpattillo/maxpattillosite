@@ -204,5 +204,6 @@ your own values, and `pnpm test`.
 
 ## License
 
-[MIT](./LICENSE) for the code. See the LICENSE for the content that is not
-covered by it.
+[MIT](./LICENSE) for the code. The content is not covered: `src/content/`,
+`src/assets/media/` and `public/og/` remain Max Pattillo's. A fork replaces all
+three anyway; see [Forking this](#forking-this).
