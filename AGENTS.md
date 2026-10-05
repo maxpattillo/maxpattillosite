@@ -138,8 +138,8 @@ verbatim and therefore arrives with no dimensions at all. See
 - Plain `<a href>`. Never JavaScript-driven navigation.
 - Root-relative paths (`/writing/`), never absolute URLs to our own domain.
 - Descriptive anchor text. Not "click here", not a bare URL.
-- Relationships belong in the content model (`relatedArticles`,
-  `relatedProjects` in frontmatter), not invented per template. `reference()`
+- Relationships belong in the content model (`relatedArticles` in
+  frontmatter), not invented per template. `reference()`
   validates them at build time, so they cannot 404.
 - Every page should be reachable from at least two others. Deliberate
   exceptions go in `ORPHAN_ALLOWLIST` (`src/data/navigation.ts`).
@@ -212,11 +212,10 @@ resources.
 ### Web fonts
 
 No web font is loaded; the placeholder styling uses system stacks. The agreed
-direction names Space Grotesk and JetBrains Mono, and the decision to load
-them — subsetting, preloading, fallbacks, and what it costs against the
-Lighthouse budget — belongs to the pending design work. See
-[DESIGN.md](./DESIGN.md). Until that lands, adding a web font is not covered by
-any decision here.
+direction names its families, and the decision to load them — subsetting,
+preloading, fallbacks, and what it costs against the Lighthouse budget —
+belongs to the pending design work. See [DESIGN.md](./DESIGN.md). Until that
+lands, adding a web font is not covered by any decision here.
 
 ## Accessibility
 
@@ -337,6 +336,7 @@ thing that fails when it is broken.
 | Full Open Graph set; `og:image` actually exists | `tests/seo/metadata.spec.ts` |
 | Default share card matches the generator | `tests/seo/og-cards.spec.ts` |
 | Share cards match the Articles they title | `tests/seo/og-cards.spec.ts` |
+| Every Article has its own share card | `tests/seo/og-cards.spec.ts` |
 | Declared `og:image` dimensions match the file | `tests/seo/og-cards.spec.ts` |
 | Exactly one descriptive `h1`; the homepage's is the Owner's name | `tests/seo/headings.spec.ts` |
 | Heading hierarchy never skips a level | `tests/seo/headings.spec.ts` |
@@ -346,13 +346,14 @@ thing that fails when it is broken.
 | No links to removed routes (`/about/`, `/thanks/`) | `tests/seo/links.spec.ts` |
 | No orphaned or weakly-linked pages | `tests/seo/links.spec.ts` |
 | Social profile URLs are absolute and https | `tests/seo/links.spec.ts` |
-| No Origin-project residue in built pages | `tests/seo/links.spec.ts` — **pending #5**, not yet written |
+| No Origin-project residue in built pages | **pending #5** — not yet written |
 | Every image declares `alt` | `tests/seo/images.spec.ts` |
 | Every image declares dimensions | `tests/seo/images.spec.ts` |
 | LCP image not lazy-loaded | `tests/seo/images.spec.ts` |
 | JSON-LD parses; `@id`s resolve | `tests/seo/structured-data.spec.ts` |
 | One Person/WebSite `@id` site-wide | `tests/seo/structured-data.spec.ts` |
-| Person `sameAs` matches the footer's profiles | `tests/seo/structured-data.spec.ts` |
+| Person `sameAs` matches the declared profiles | `tests/seo/structured-data.spec.ts` |
+| Every page links to every declared social profile | `tests/seo/links.spec.ts` |
 | Person claims no role or employer | `tests/seo/structured-data.spec.ts` |
 | No fabricated schema types | `tests/seo/structured-data.spec.ts` |
 | Breadcrumb schema matches a visible trail | `tests/seo/structured-data.spec.ts` |
@@ -367,7 +368,7 @@ thing that fails when it is broken.
 | Trailing-slash redirect works at the edge | `tests/e2e/edge.spec.ts` |
 | Unknown and removed URLs return a real 404 | `tests/e2e/edge.spec.ts` |
 | Site works with JavaScript disabled | `tests/e2e/no-js.spec.ts` |
-| Only the CloseBot widget, and only its origin, ships script | `tests/e2e/no-js.spec.ts` |
+| Only the CloseBot widget ships script, per path; its origin is the only third party | `tests/e2e/no-js.spec.ts` |
 | Every page renders dark, whatever the system preference | `tests/e2e/no-js.spec.ts` |
 | Pages fit a 375px phone; the header stays one line | `tests/e2e/mobile.spec.ts` |
 | Related links resolve to real Articles | `reference()` in `src/content.config.ts` |
@@ -520,8 +521,7 @@ than copying an existing page, which propagates whatever that page got wrong.
 
 - [x] ~~Fill in `sameAs` in `src/data/person.ts` with verified profile URLs~~ —
       GitHub. Read the note on `socialProfiles` before adding another
-- [x] ~~Confirm `SITE_URL` matches the domain actually being deployed~~ —
-      `https://maxpattillo.com`
+- [x] ~~Confirm `SITE_URL` matches the domain actually being deployed~~
 - [ ] Verify the site in Google Search Console and submit the sitemap
 - [ ] Add the Owner's LinkedIn to `socialProfiles` once verified
 - [ ] Choose a public contact email; until then the Person has no `email` and
