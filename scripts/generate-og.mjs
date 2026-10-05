@@ -21,9 +21,9 @@
  * build is what copies the regenerated PNG out of `public/` and into `dist/`.
  * `tests/seo/og-cards.spec.ts` fails if you skip any of it.
  *
- * GENERATED, NOT DRAWN. Committed output, and the build never runs this --
- * same contract as the bean (see generate-bean.mjs). `sharp` is already a
- * devDependency for Astro's image pipeline, so this adds nothing to install.
+ * GENERATED, NOT DRAWN. Committed output, and the build never runs this.
+ * `sharp` is already a devDependency for Astro's image pipeline, so this adds
+ * nothing to install.
  *
  * Layout and palette live in og-card.mjs. This file only decides what to draw
  * and where to put it.

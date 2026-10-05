@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 
-import { defineConfig, envField, fontProviders } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -87,8 +87,8 @@ export default defineConfig({
    *
    * It lives here rather than hard-coded for a different reason: FORK HYGIENE.
    * With the value baked into the source, anyone who clones this repository and
-   * deploys it loads the original owner's agent, and their visitors'
-   * conversations -- and the usage bill -- land in someone else's account. They
+   * deploys it loads the Owner's agent, and their visitors' conversations --
+   * and the usage bill -- land in someone else's account. They
    * would have to notice and remove it. Optional-and-absent inverts that: a
    * fork gets no widget until it supplies its own id, which is the safe
    * default rather than the attentive one.
@@ -112,57 +112,6 @@ export default defineConfig({
    * invoking a Worker. Every indexable byte is in the initial HTML response.
    */
   output: 'static',
-
-  /**
-   * TYPOGRAPHY. See DESIGN.md, and the web-font note in AGENTS.md for why the
-   * default answer of "no web fonts" was deliberately overridden here.
-   *
-   * Two families from one superfamily. The Fonts API is preferred over pulling
-   * Fontsource in by hand because it does the three things that actually make a
-   * self-hosted font cheap: it subsets to the characters we declare, inlines
-   * the @font-face rules instead of costing a stylesheet round-trip, and
-   * generates metric-matched fallbacks so nothing shifts while the face swaps.
-   *
-   * It emits <style> and <link>, never <script>, so none of this touches the
-   * hydration budget.
-   */
-  fonts: [
-    {
-      provider: fontProviders.fontsource(),
-      name: 'IBM Plex Sans',
-      cssVariable: '--font-plex-sans',
-      weights: [400, 600],
-      /*
-       * `styles` DEFAULTS TO ['normal', 'italic']. Leaving it implicit doubles
-       * the payload and, worse, preloads italic faces that no page needs on the
-       * critical path. Roman only: 128KB over six files becomes 62KB over three.
-       *
-       * The cost is synthetic oblique for <em> in prose. Acceptable here --
-       * DESIGN.md leans on mono and hairlines for emphasis, not italics.
-       */
-      styles: ['normal'],
-      subsets: ['latin'],
-      display: 'swap',
-      fallbacks: ['system-ui', 'sans-serif'],
-      optimizedFallbacks: true,
-    },
-    {
-      /*
-       * Mono sets small labels only -- kickers, dates, panel titles. It is not
-       * preloaded in BaseLayout: a brief swap at 11px is invisible, and the
-       * bytes are better spent on the display face.
-       */
-      provider: fontProviders.fontsource(),
-      name: 'IBM Plex Mono',
-      cssVariable: '--font-plex-mono',
-      weights: [400],
-      styles: ['normal'],
-      subsets: ['latin'],
-      display: 'swap',
-      fallbacks: ['ui-monospace', 'monospace'],
-      optimizedFallbacks: true,
-    },
-  ],
 
   integrations: [
     mdx(),

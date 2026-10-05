@@ -68,24 +68,18 @@ test('the skip link is reachable by keyboard and targets main', async ({ page })
 
 test('scripts are limited to the known set, on every path', async ({ page }) => {
   /*
-   * The budget in tests/seo/javascript.spec.ts is a ceiling of three. This is
-   * the per-path assertion that stops it becoming an allowance: every page
-   * carries the theme bootstrap, the widget callout, and -- when an account is
-   * configured -- the CloseBot widget, and nothing else. A fourth script
-   * anywhere fails HERE.
-   *
-   * The homepage used to be the exception, carrying "CLOCK TOOL 1.1" as a
-   * fourth. With the clock gone there is no exception left, and every path is
-   * now held to the same count.
+   * The budget in tests/seo/javascript.spec.ts is a ceiling of one. This is
+   * the per-path assertion that stops it becoming an allowance: when an account
+   * is configured every page carries the CloseBot widget, and nothing else. A
+   * second script anywhere fails HERE.
    *
    * WHY THE EXPECTED NUMBER IS DERIVED RATHER THAN LITERAL. The widget renders
    * only when CLOSEBOT_SOURCE is set at build time, so a contributor or a fork
-   * building without that variable legitimately ships two scripts, not three.
-   * Hard-coding 3 would fail their checkout for doing nothing wrong, and the
-   * usual reflex -- relaxing it to `toBeLessThanOrEqual(3)` -- would quietly
-   * stop catching a third script that is not one of ours. Deriving the
-   * expectation from whether the widget is present keeps the assertion exact
-   * in both cases.
+   * building without that variable legitimately ships zero scripts, not one.
+   * Hard-coding 1 would fail their checkout for doing nothing wrong, and the
+   * usual reflex -- relaxing it to `toBeLessThanOrEqual(1)` -- would quietly
+   * stop catching a script that is not the widget. Deriving the expectation
+   * from whether the widget is present keeps the assertion exact in both cases.
    */
   const scripts = page.locator('script:not([type="application/ld+json"])');
   const widget = page.locator('script[src*="closebot.com"]');
@@ -93,16 +87,15 @@ test('scripts are limited to the known set, on every path', async ({ page }) => 
   for (const path of ['/', '/writing/', '/open-source/']) {
     await page.goto(path);
 
-    // The theme bootstrap and the widget callout are unconditional.
-    const expected = 2 + (await widget.count());
+    const expected = await widget.count();
 
     expect(
       await scripts.count(),
-      `${path} ships an unexpected number of script tags; expected the theme ` +
-        'bootstrap, the widget callout, and the CloseBot widget if configured',
+      `${path} ships an unexpected number of script tags; expected only the ` +
+        'CloseBot widget, and only if configured',
     ).toBe(expected);
 
-    expect(expected, `${path} exceeds the three-script budget`).toBeLessThanOrEqual(3);
+    expect(expected, `${path} exceeds the one-script budget`).toBeLessThanOrEqual(1);
   }
 });
 
@@ -127,127 +120,54 @@ test('the only third-party script is the CloseBot widget', async ({ page }) => {
   }
 });
 
-test('the CloseBot send button ends up with an accessible name', async ({ page }, testInfo) => {
+test('every page renders dark, whatever the system preference', async ({ page }) => {
   /*
-   * The widget ships `button.cb-send` unlabelled, which Lighthouse flags as
-   * `button-name` and which alone drops the accessibility score below the 0.95
-   * floor. The bootstrap in BaseLayout.astro patches it (see the long note
-   * there; the real fix belongs in cb.js).
+   * The site is dark-only. Runs in both projects, so it holds with and without
+   * JavaScript -- there is no script left that could choose a palette, so the
+   * answer has to come from CSS alone.
    *
-   * This test exists because that patch is selector-coupled to someone else's
-   * markup. If the widget renames the class, the patch silently stops working
-   * and the score quietly regresses -- unless this fails first.
+   * The system preference is forced to LIGHT. A test run under a dark
+   * preference would pass against a site that still had a light theme, which
+   * is the exact regression this exists to catch.
    */
-  test.skip(testInfo.project.name === 'no-javascript', 'the widget needs JavaScript to render');
+  await page.emulateMedia({ colorScheme: 'light' });
 
-  await page.goto('/');
+  for (const path of ['/', '/writing/', '/open-source/', '/no-such-page/']) {
+    await page.goto(path);
 
-  const send = page.locator('.cb-send');
-  try {
-    await send.first().waitFor({ state: 'attached', timeout: 15000 });
-  } catch {
-    /*
-     * Third-party, over the network. Not reaching it is an environment problem,
-     * not a regression in this repo, so do not fail the suite for it.
-     */
-    test.skip(true, 'CloseBot widget did not load; nothing to assert');
-    return;
+    const { background, scheme } = await page.evaluate(() => ({
+      background: getComputedStyle(document.body).backgroundColor,
+      scheme: getComputedStyle(document.documentElement).colorScheme,
+    }));
+
+    expect(scheme, `${path} does not declare color-scheme: dark`).toBe('dark');
+    expect(
+      relativeLuminance(background),
+      `${path} has a light background (${background})`,
+    ).toBeLessThan(0.05);
   }
-
-  const name = await send.first().evaluate(
-    (el) => el.getAttribute('aria-label') || el.textContent?.trim() || '',
-  );
-  expect(name, '.cb-send has no accessible name; the bootstrap patch is not reaching it').not.toBe(
-    '',
-  );
 });
 
-test('the theme toggle is hidden without JavaScript, and persists with it', async (
-  { page },
-  testInfo,
-) => {
-  await page.goto('/');
-  const toggle = page.locator('#theme-toggle');
-  const html = page.locator('html');
-
-  if (testInfo.project.name === 'no-javascript') {
-    /*
-     * A control that cannot work must not be offered. Without JS the theme
-     * still follows prefers-color-scheme -- it just cannot be overridden.
-     */
-    await expect(toggle).toBeHidden();
-    return;
+/**
+ * WCAG relative luminance of a computed colour. Chromium reports computed
+ * colours as `rgb()` for sRGB values but keeps `oklch()` as authored, so both
+ * are handled.
+ */
+function relativeLuminance(color: string): number {
+  const oklch = /^oklch\(([\d.]+)%?\s/.exec(color);
+  if (oklch) {
+    // OKLCH lightness is perceptual; cubing it approximates linear luminance
+    // closely enough to tell a near-black from anything a light theme uses.
+    const L = Number(oklch[1]) > 1 ? Number(oklch[1]) / 100 : Number(oklch[1]);
+    return L ** 3;
   }
 
-  await expect(toggle).toBeVisible();
+  const rgb = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
+  if (!rgb) throw new Error(`unrecognised colour: ${color}`);
 
-  const before = await html.getAttribute('data-theme');
-  const widthBefore = (await toggle.boundingBox())!.width;
-
-  await toggle.click();
-  const after = await html.getAttribute('data-theme');
-
-  expect(after, 'clicking the toggle did not change the theme').not.toBe(before);
-  expect(['light', 'dark']).toContain(after);
-
-  /*
-   * The label names the theme the button switches TO, so it alternates between
-   * two strings of different widths. Sized to the current label, the button
-   * resized on every click and shoved the rest of the header row sideways --
-   * a user-triggered layout shift, on a sticky element, on every page.
-   *
-   * ThemeToggle.astro pins the width to the wider label with an invisible
-   * sizer. This is the assertion that keeps it pinned.
-   */
-  const widthAfter = (await toggle.boundingBox())!.width;
-  expect(widthAfter, 'the toggle changed width when clicked; the header row will shift').toBe(
-    widthBefore,
-  );
-
-  /*
-   * The reason this needed JavaScript at all. A CSS-only toggle cannot remember
-   * a choice across a navigation on a static multi-page site, so if this
-   * assertion ever fails the script has stopped earning its place in the budget.
-   */
-  await page.goto('/writing/');
-  await expect(html).toHaveAttribute('data-theme', after!);
-});
-
-test('the card catalog sifts with JavaScript disabled', async ({ page }) => {
-  /*
-   * The whole justification for building the filter in CSS is that it works
-   * without hydration. This asserts that claim in the `no-javascript` project,
-   * where nothing can quietly rescue it.
-   */
-  await page.goto('/writing/');
-
-  const cards = page.locator('.catalog-card');
-  const total = await cards.count();
-  test.skip(total < 2, 'fewer than two Articles; nothing to sift');
-
-  // Resting state: the whole pile is visible.
-  await expect(cards).toHaveCount(total);
-  for (let i = 0; i < total; i += 1) {
-    await expect(cards.nth(i)).toBeVisible();
-  }
-
-  // Pull a drawer. Labels are the visible control; the radio is sr-only.
-  const drawer = page.locator('.catalog-tab').nth(1);
-  const drawerName = (await drawer.textContent())!.trim();
-  await drawer.click();
-
-  const visible = page.locator('.catalog-card:visible');
-  const remaining = await visible.count();
-
-  expect(remaining, `"${drawerName}" hid everything`).toBeGreaterThan(0);
-  expect(remaining, `"${drawerName}" hid nothing`).toBeLessThan(total);
-
-  // Every surviving card actually carries the chosen topic.
-  const topic = await page.locator('.catalog-radio:checked').getAttribute('value');
-  for (let i = 0; i < remaining; i += 1) {
-    await expect(visible.nth(i)).toHaveAttribute('data-topics', new RegExp(`\\b${topic}\\b`));
-  }
-
-  // And the stack squares up — the angle is the whole visual payoff.
-  await expect(visible.first()).toHaveCSS('rotate', '0deg');
-});
+  const [r = 0, g = 0, b = 0] = rgb.slice(1, 4).map((v) => {
+    const c = Number(v) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}

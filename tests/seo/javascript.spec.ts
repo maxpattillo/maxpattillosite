@@ -14,38 +14,26 @@ import { allPages } from './manifest';
  * introduces the island -- never as a follow-up fix to a red build.
  */
 /*
- * Raised from 0 to 3. None of these is an island -- no framework integration is
- * installed and none was added.
+ * Lowered from 3 to 1. The widget callout and the theme bootstrap were the
+ * Origin project's, and both went when the site became dark-only: with one
+ * palette there is nothing for a bootstrap to choose before first paint, and
+ * no callout is wanted pointing at the launcher. The budget came down in the
+ * same commit, because a number that only ratchets upward stops being a
+ * budget -- the next island would inherit the headroom.
  *
- *   0. The CloseBot chat widget, `async`, on every page. The only third-party
- *      script on the site and a deliberate exception to the "avoid third-party
- *      scripts" rule: it is the owner's own product. It is also the only one of
- *      the three whose cost is not fully under our control, so it is the first
- *      thing to look at if the Lighthouse performance budget ever slips.
+ * The one script left is the CloseBot chat widget, `async`, on every page. It
+ * is the Owner's own agent, built on the product of the Owner's employer, and
+ * the only third-party script on the site. Its cost is not under our control,
+ * so it is the first thing to look at if the Lighthouse performance budget
+ * ever slips. It renders only when CLOSEBOT_SOURCE is set at build time, so a
+ * checkout without that variable ships zero.
  *
- *   1. The theme bootstrap in BaseLayout.astro. On every page, and `is:inline`
- *      because a deferred one would paint the wrong palette before switching.
- *      A persistent light/dark toggle cannot be built without it: CSS alone
- *      cannot remember a choice across a navigation on a static multi-page
- *      site, so the toggle would reset on every click-through.
+ * None of this is an island -- no framework integration is installed.
  *
- *   2. The chat-launcher callout (components/ui/WidgetCallout.astro). It needs
- *      JS because it has to know whether the third-party widget is open, and
- *      that state is only expressed as inline styles inside cb.js. See the long
- *      note in that component for why a CSS-only version would be a guess.
- *
- * WAS 4. "CLOCK TOOL 1.1" held the fourth slot -- a homepage ornament that
- * upgraded a server-rendered build timestamp to a ticking one. It was removed
- * because it was not wanted, and the budget came down with it in the same
- * commit. A budget that only ever ratchets upward stops being a budget: the
- * number has to fall when a script goes, or the next island inherits the
- * headroom the last one left behind.
- *
- * This is a CEILING, not an allowance. Every page now spends exactly three, so
- * there is no slack at all -- and tests/e2e/no-js.spec.ts asserts the count
- * per path, which is what stops a single page quietly growing a fourth.
+ * This is a CEILING, not an allowance, and with the widget configured there
+ * is no slack in it. tests/e2e/no-js.spec.ts asserts the count per path.
  */
-const MAX_SCRIPTS_PER_PAGE = 3;
+const MAX_SCRIPTS_PER_PAGE = 1;
 
 describe('client JavaScript', () => {
   it.each(allPages.map((page) => [page.url, page] as const))(

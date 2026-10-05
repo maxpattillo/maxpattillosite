@@ -90,12 +90,11 @@ co-founded CloseBot, so read it as such.
 | `pnpm test:lighthouse` | Performance / a11y / SEO budgets. |
 | `pnpm serve` | Serve `dist/` exactly as Cloudflare will. |
 | `pnpm og` | Regenerate the social share cards. Builds first. |
-| `pnpm bean` | Regenerate the mascot (CSS sprite + favicon). |
 | `pnpm deploy` | Build and deploy via Wrangler. |
 
-`og` and `bean` are **not** part of the build. Both write committed assets from
-a single source, so the deploy has no generation step. Run them by hand and
-commit the output in the same change.
+`og` is **not** part of the build. It writes committed assets, so the deploy
+has no generation step. Run it by hand and commit the output in the same
+change.
 
 ## How it fits together
 
@@ -134,10 +133,10 @@ Measured, not asserted — these come from a real `pnpm test:lighthouse` run
 - **Performance 100, accessibility 100, SEO 100** on every indexable page.
   Best practices is 100 except `/about/` at 96. The 404 scores SEO 63 because
   it is deliberately `noindex`, which the Lighthouse config excludes by pattern.
-- **No framework and no hydration runtime.** Three small scripts per page — a
-  theme bootstrap, the chat widget, and the widget callout — and that ceiling
-  is enforced by a test. It was zero before the theme toggle; see the note in
-  AGENTS.md on why the number is a budget and not a target.
+- **No framework and no hydration runtime.** At most one script per page — the
+  chat widget, and only when it is configured — and that ceiling is enforced
+  by a test. See the note in AGENTS.md on why the number is a budget and not a
+  target.
 - 254 SEO assertions + 29 end-to-end tests.
 
 ## Running it locally
@@ -346,7 +345,7 @@ Change these first:
 | Worker name | `wrangler.jsonc` |
 | Security contact | `public/.well-known/security.txt` |
 
-Then run `pnpm bean && pnpm og` to regenerate the mascot and share cards from
+Then run `pnpm og` to regenerate the share cards from
 your own values, and `pnpm test`.
 
 ## License

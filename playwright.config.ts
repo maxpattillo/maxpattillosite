@@ -14,10 +14,8 @@ const baseURL = `http://localhost:${PORT}`;
  *   1. Cloudflare's edge behaviour -- trailing-slash redirects and real 404
  *      status codes, which come from wrangler.jsonc, not from the HTML.
  *   2. Whether the page actually works with JavaScript disabled.
- *   3. Whether anything fixed-position swallows a phone screen. The manifest
- *      has no viewport, and every other check runs at a desktop size, so a
- *      272px ornament sat over the content on mobile for a long time without
- *      one single test going red. See tests/e2e/mobile.spec.ts.
+ *   3. Whether a page fits a phone. The manifest has no viewport, and every
+ *      other check runs at a desktop size. See tests/e2e/mobile.spec.ts.
  *
  * It therefore runs against `wrangler dev`, the real Workers runtime serving
  * ./dist, rather than `astro preview`. `astro preview` would answer a
