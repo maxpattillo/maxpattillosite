@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { SITE_URL } from '../../src/data/site';
+
 /**
  * Cloudflare edge behaviour.
  *
@@ -12,7 +14,7 @@ import { expect, test } from '@playwright/test';
 
 test.describe('URL policy', () => {
   test('a non-trailing-slash URL redirects to the canonical form', async ({ request }) => {
-    const response = await request.get('/about', { maxRedirects: 0 });
+    const response = await request.get('/writing', { maxRedirects: 0 });
 
     expect(
       [301, 307, 308],
@@ -20,11 +22,11 @@ test.describe('URL policy', () => {
     ).toContain(response.status());
 
     const location = response.headers()['location'] ?? '';
-    expect(new URL(location, 'http://localhost').pathname).toBe('/about/');
+    expect(new URL(location, 'http://localhost').pathname).toBe('/writing/');
   });
 
   test('the canonical URL is served directly, with no redirect', async ({ request }) => {
-    const response = await request.get('/about/', { maxRedirects: 0 });
+    const response = await request.get('/writing/', { maxRedirects: 0 });
     expect(response.status()).toBe(200);
   });
 
@@ -33,7 +35,7 @@ test.describe('URL policy', () => {
     expect(response.status()).toBe(200);
 
     const body = await response.text();
-    expect(body).toContain('Sitemap: https://brycedecora.com/sitemap-index.xml');
+    expect(body).toContain(`Sitemap: ${SITE_URL}/sitemap-index.xml`);
   });
 
   test('the sitemap index is served as XML', async ({ request }) => {
@@ -54,6 +56,15 @@ test.describe('404 handling', () => {
     expect(response.status()).toBe(404);
     expect(await response.text()).toContain('Page not found');
   });
+
+  for (const removed of ['/about/', '/thanks/']) {
+    test(`${removed} is gone, not soft-404ed`, async ({ request }) => {
+      // Origin project pages, deleted rather than redirected: there is no
+      // equivalent here to send anyone to.
+      const response = await request.get(removed, { maxRedirects: 0 });
+      expect(response.status()).toBe(404);
+    });
+  }
 
   test('the 404 page is noindex and declares no canonical', async ({ page }) => {
     await page.goto('/this-page-does-not-exist/');

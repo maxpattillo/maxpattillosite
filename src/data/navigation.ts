@@ -18,20 +18,16 @@ export interface NavItem {
 }
 
 export const primaryNav: readonly NavItem[] = [
-  { label: 'About', href: '/about/', description: 'Who I am and what I work on' },
   { label: 'Writing', href: '/writing/', description: 'Articles and notes' },
 ];
 
 export const footerNav: readonly NavItem[] = [
-  { label: 'About', href: '/about/' },
-  { label: 'Writing', href: '/writing/' },
   /*
-   * The explainer for the public repository, and the one place the GitHub link
-   * lives. Footer-only: the header carries the same destination as a "Fork this
-   * site" action rather than as a nav item, because it is a call to action and
-   * is styled as one.
+   * The explainer for the public repository, and the one place the repository
+   * link lives. Labelled "Source" because that is what a reader is looking for
+   * in a footer; the page itself is /open-source/.
    */
-  { label: 'Open source', href: '/open-source/' },
+  { label: 'Source', href: '/open-source/' },
 ];
 
 /**
@@ -42,5 +38,4 @@ export const footerNav: readonly NavItem[] = [
 export const ORPHAN_ALLOWLIST: readonly string[] = [
   '/', // the homepage is the root entry point
   '/404.html', // error page, never linked
-  '/thanks/', // post-submit destination, reached only via form redirect
 ];

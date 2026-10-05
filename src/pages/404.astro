@@ -7,13 +7,13 @@
  * that setting, unmatched URLs would return 200 and become soft 404s.
  */
 import PageLayout from '../layouts/PageLayout.astro';
-import Bean from '../components/ui/Bean.astro';
 import { primaryNav } from '../data/navigation';
+import { person } from '../data/person';
 ---
 
 <PageLayout
   seo={{
-    title: 'Page not found — Bryce DeCora',
+    title: `Page not found — ${person.name}`,
     description:
       'That page does not exist. It may have moved, or the link that brought you here may be out of date.',
     robots: { index: false, follow: true },
@@ -34,16 +34,6 @@ import { primaryNav } from '../data/navigation';
   heading="Page not found"
   lede="That page does not exist. It may have moved, or the link that brought you here may be out of date."
 >
-  {/*
-    The mascot at full size. A 404 is the one page with nothing to say and all
-    the room in the world to say it in, which makes it the right home for the
-    biggest bean on the site.
-  */}
-  <p class="mb-10 flex items-center gap-6">
-    <Bean size="xl" spin />
-    <span class="kicker">Nothing roasting here</span>
-  </p>
-
   <nav aria-label="Suggested pages">
     <ul class="space-y-2">
       <li>

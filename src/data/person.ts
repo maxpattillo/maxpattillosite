@@ -39,11 +39,21 @@ export interface PersonEntity {
   readonly name: string;
   readonly givenName: string;
   readonly familyName: string;
-  readonly jobTitle: string;
-  /** One-sentence bio. Used as the fallback meta description on the homepage. */
+  /**
+   * One-sentence bio for the Person and WebSite JSON-LD and the feed. Not shown
+   * on any page, so it claims nothing beyond what the pages already do.
+   */
   readonly description: string;
-  readonly email: string;
-  readonly worksFor: Organization;
+  /*
+   * The four below are optional, and left out while no page states them.
+   * Schema must describe what the page shows; buildPerson() emits each one
+   * only when it is present.
+   */
+  readonly jobTitle?: string;
+  readonly email?: string;
+  readonly worksFor?: Organization;
+  /** Topics the person has demonstrable expertise in. Feeds `knowsAbout`. */
+  readonly knowsAbout?: readonly string[];
   /**
    * Verified social profiles. Rendered in the footer AND emitted as
    * schema.org `sameAs`.
@@ -57,71 +67,27 @@ export interface PersonEntity {
    * Order here is the order shown in the footer.
    */
   readonly socialProfiles: readonly SocialProfile[];
-  /** Topics the person has demonstrable expertise in. Feeds `knowsAbout`. */
-  readonly knowsAbout: readonly string[];
 }
-
-/*
- * NO `image` FIELD HERE, DELIBERATELY.
- *
- * The portrait is an optimised asset, so its final URL is only known after the
- * build hashes it. Importing the asset into this module would resolve that —
- * but this module is also imported by the Vitest suite, which has no image
- * pipeline, and the import would break every test that touches it.
- *
- * So src/utils/schema.ts owns the portrait instead. See buildPerson().
- */
 
 /*
  * Annotated with the interface rather than `as const satisfies`, so optional
  * properties absent from the literal still exist on the type.
  */
 export const person: PersonEntity = {
-  name: 'Bryce DeCora',
-  givenName: 'Bryce',
-  familyName: 'DeCora',
-  jobTitle: 'Co-founder & CEO, CloseBot',
-  description:
-    'Co-founder and CEO of CloseBot. Former Boeing engineer who taught himself to code and now builds AI that handles sales conversations.',
-  email: 'info@closebot.ai',
-  worksFor: {
-    name: 'CloseBot',
-    // closebot.ai 301s here — `sameAs` and entity URLs should name the
-    // destination, not a hop.
-    url: 'https://closebot.com',
-  },
+  name: 'Max Pattillo',
+  givenName: 'Max',
+  familyName: 'Pattillo',
+  description: 'Max Pattillo writes here sometimes.',
   /*
    * PERSONAL PROFILES ONLY. Everything here is asserted as identity -- it
    * feeds schema.org `sameAs` and the footer's rel="me" -- so the bar is "this
-   * is the same human", not "this account has something to do with Bryce".
+   * is the same human", not "this account has something to do with the Owner".
+   * A CloseBot company account never belongs here: listing it would tell
+   * search engines the company and the Owner are one entity.
    *
-   * LinkedIn is corroborated independently: /in/iambryce appears across many
-   * unrelated sources carrying the "Co-Founder CEO CloseBot" headline.
-   * Instagram and Facebook were given by the site's owner directly, which is
-   * the strongest verification a personal account can have. The Facebook
-   * handle matching the LinkedIn one is a further consistency check, not the
-   * reason either is listed.
-   *
-   * X IS DELIBERATELY ABSENT, and this is the paragraph to read before adding
-   * one. @closebotai exists on X, as does facebook.com/groups/closebot -- and
-   * both are COMPANY accounts. Listing a company account in a Person's
-   * `sameAs` tells search engines that the company and the person are one
-   * entity, which is false and is the specific failure this field causes.
-   * There is no personal X account to list. If one appears it belongs here;
-   * the CloseBot accounts still do not.
+   * GitHub is the only profile so far. Add others as the Owner verifies them.
    */
-  socialProfiles: [
-    { label: 'LinkedIn', url: 'https://www.linkedin.com/in/iambryce' },
-    { label: 'Instagram', url: 'https://www.instagram.com/brycedecora/' },
-    { label: 'Facebook', url: 'https://www.facebook.com/iambryce' },
-  ],
-  knowsAbout: [
-    'Conversational AI',
-    'AI sales agents',
-    'Lead qualification',
-    'Marketing automation',
-    'SaaS',
-  ],
+  socialProfiles: [{ label: 'GitHub', url: 'https://github.com/maxpattillo' }],
 };
 
 /**

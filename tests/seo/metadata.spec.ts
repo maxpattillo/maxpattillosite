@@ -37,6 +37,25 @@ describe('titles', () => {
   });
 });
 
+describe('homepage metadata', () => {
+  /*
+   * The two strings a search result shows for the Owner's name. Literal on
+   * purpose: they were agreed word for word, and a test that derived them from
+   * the page would pass whatever the page said.
+   */
+  const home = allPages.find((page) => page.url === '/');
+
+  it('is titled with the Owner\'s name', () => {
+    expect(home?.title).toBe('Max Pattillo');
+  });
+
+  it('carries the agreed description', () => {
+    expect(home?.description).toBe(
+      'I put my thoughts here sometimes. Max Pattillo, developer at CloseBot.',
+    );
+  });
+});
+
 describe('descriptions', () => {
   it.each(allPages.map((page) => [page.url, page] as const))(
     '%s has a meta description',

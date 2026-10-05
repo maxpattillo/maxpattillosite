@@ -4,6 +4,9 @@ import { ORPHAN_ALLOWLIST } from '../../src/data/navigation';
 import { person, sameAs } from '../../src/data/person';
 import { allPages, emittedFiles, indexablePages, pagesByUrl } from './manifest';
 
+/** Routes the Origin project had and this site deliberately does not. */
+const REMOVED_ROUTES = ['/about/', '/thanks/'];
+
 /** A link target resolves if it is a built page or any other emitted file. */
 const resolves = (path: string, href: string) =>
   pagesByUrl.has(path) || emittedFiles.has(path) || emittedFiles.has(href.split(/[?#]/)[0] ?? href);
@@ -43,6 +46,22 @@ describe('internal links', () => {
        * in src/data/site.ts.
        */
       expect(page.hardCodedOriginLinks, 'use root-relative paths instead').toEqual([]);
+    },
+  );
+
+  it.each(allPages.map((page) => [page.url, page] as const))(
+    '%s never links to a removed route',
+    (_url, page) => {
+      /*
+       * /about/ and /thanks/ belonged to the Origin project and were deleted
+       * rather than redirected. The broken-link check above already fails a
+       * link to them while they are absent; this one names the cause, and
+       * keeps failing if someone rebuilds either page with old copy.
+       */
+      const removed = page.internalLinksOut
+        .map((link) => link.path)
+        .filter((path) => REMOVED_ROUTES.includes(path));
+      expect(removed, 'these routes were removed and must not be linked').toEqual([]);
     },
   );
 });

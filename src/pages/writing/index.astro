@@ -2,33 +2,45 @@
 /**
  * The full catalogue.
  *
- * Same component as the homepage field, given every article instead of the
- * featured slice. Reusing it rather than writing a second list is the point:
- * two listings drift, and the one nobody looks at is the one that rots.
+ * While nothing is published the page says so plainly and offers the feed, so
+ * an empty section reads as early rather than broken, and someone who wants
+ * the first Article can subscribe before it exists.
  */
 import PageLayout from '../../layouts/PageLayout.astro';
 import CardCatalog from '../../components/writing/CardCatalog.astro';
+import { person } from '../../data/person';
 import { getPublishedArticles } from '../../utils/collections';
 
 const articles = await getPublishedArticles();
+
+/*
+ * Branches with the body, so the search snippet cannot keep saying "nothing
+ * published" after the first Article ships.
+ */
+const description =
+  articles.length === 0
+    ? `Articles by ${person.name}. Nothing is published yet; subscribe to the RSS feed to get the first one when it lands.`
+    : `Articles by ${person.name}, newest first. Subscribe to the RSS feed to get each new one when it is published.`;
 ---
 
 <PageLayout
   seo={{
-    title: 'Writing — Bryce DeCora',
-    description:
-      'Articles on building AI sales systems, web architecture, and the engineering decisions behind the products I work on.',
+    title: `Writing — ${person.name}`,
+    description,
   }}
   pageType="CollectionPage"
   heading="Writing"
-  lede="Notes on building software, and on the decisions that turned out to matter."
   width="wide"
 >
   {
     articles.length === 0 ? (
-      <p class="text-ink-muted">Nothing published yet.</p>
+      <p class="text-ink-muted">Nothing here yet.</p>
     ) : (
       <CardCatalog articles={articles} headingLevel={2} class="mt-12" />
     )
   }
+
+  <p class="mt-6">
+    <a href="/rss.xml">Subscribe with RSS</a>
+  </p>
 </PageLayout>

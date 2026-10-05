@@ -29,6 +29,9 @@ export const articleCardFile = (slug) => `og/writing/${slug}.png`;
  * Only `/writing/<slug>/` -- the index at `/writing/` is not an article and
  * takes the default card. Drafts never reach the manifest, because a
  * production build does not emit them at all.
+ *
+ * May be empty: a site with no published Articles is a real state, not a
+ * failed read, and `pnpm og` still has the default card to draw.
  */
 export function readArticles(manifestPath = MANIFEST_PATH) {
   let raw;
@@ -56,13 +59,6 @@ export function readArticles(manifestPath = MANIFEST_PATH) {
     }
 
     articles.push({ slug: match[1], title });
-  }
-
-  if (articles.length === 0) {
-    throw new Error(
-      `og: no article pages found in ${manifestPath}. A generator that silently ` +
-        `produces nothing looks exactly like one that succeeded.`,
-    );
   }
 
   return articles.sort((a, b) => a.slug.localeCompare(b.slug));

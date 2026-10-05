@@ -12,20 +12,11 @@ import { expect, test } from '@playwright/test';
 test('the homepage renders its content without JavaScript', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('h1')).toHaveText('Bryce DeCora');
+  await expect(page.locator('h1')).toHaveText('Max Pattillo');
   await expect(page.locator('h1')).toHaveCount(1);
 
   // Content, not just chrome.
-  await expect(page.getByRole('heading', { name: 'The catalogue' })).toBeVisible();
-
-  /*
-   * The catalog is a visual treatment over an honest list, so every article
-   * title is a real heading in source order whether or not anything renders
-   * the cards as a tilted pile.
-   */
-  const cardHeadings = page.locator('.catalog-card h3');
-  expect(await cardHeadings.count()).toBeGreaterThan(0);
-  await expect(cardHeadings.first()).toBeVisible();
+  await expect(page.getByText('Hello there.')).toBeVisible();
 });
 
 test('primary navigation works without JavaScript', async ({ page }) => {
@@ -41,6 +32,7 @@ test('an article is fully readable without JavaScript', async ({ page }) => {
   await page.goto('/writing/');
 
   const firstArticle = page.locator('main h2 a').first();
+  test.skip((await firstArticle.count()) === 0, 'no Articles are published yet');
   const title = await firstArticle.textContent();
   await firstArticle.click();
 
@@ -50,17 +42,17 @@ test('an article is fully readable without JavaScript', async ({ page }) => {
 });
 
 test('breadcrumbs match the structured data trail', async ({ page }) => {
-  await page.goto('/writing/when-an-ai-appointment-setter-is-the-wrong-tool/');
+  await page.goto('/open-source/');
 
   const crumbs = page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('listitem');
-  await expect(crumbs).toHaveCount(3); // Home / Writing / <title>
+  await expect(crumbs).toHaveCount(2); // Home / Open source
 
   const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
   const graph = JSON.parse(jsonLd!)['@graph'] as Array<Record<string, unknown>>;
   const breadcrumb = graph.find((node) => node['@type'] === 'BreadcrumbList');
 
   expect(breadcrumb, 'no BreadcrumbList in the graph').toBeDefined();
-  expect((breadcrumb!['itemListElement'] as unknown[]).length).toBe(3);
+  expect((breadcrumb!['itemListElement'] as unknown[]).length).toBe(2);
 });
 
 test('the skip link is reachable by keyboard and targets main', async ({ page }) => {
@@ -98,7 +90,7 @@ test('scripts are limited to the known set, on every path', async ({ page }) => 
   const scripts = page.locator('script:not([type="application/ld+json"])');
   const widget = page.locator('script[src*="closebot.com"]');
 
-  for (const path of ['/', '/about/', '/writing/', '/writing/when-an-ai-appointment-setter-is-the-wrong-tool/']) {
+  for (const path of ['/', '/writing/', '/open-source/']) {
     await page.goto(path);
 
     // The theme bootstrap and the widget callout are unconditional.
@@ -217,7 +209,7 @@ test('the theme toggle is hidden without JavaScript, and persists with it', asyn
    * a choice across a navigation on a static multi-page site, so if this
    * assertion ever fails the script has stopped earning its place in the budget.
    */
-  await page.goto('/about/');
+  await page.goto('/writing/');
   await expect(html).toHaveAttribute('data-theme', after!);
 });
 
@@ -231,7 +223,7 @@ test('the card catalog sifts with JavaScript disabled', async ({ page }) => {
 
   const cards = page.locator('.catalog-card');
   const total = await cards.count();
-  expect(total, 'no cards to sift').toBeGreaterThan(1);
+  test.skip(total < 2, 'fewer than two Articles; nothing to sift');
 
   // Resting state: the whole pile is visible.
   await expect(cards).toHaveCount(total);

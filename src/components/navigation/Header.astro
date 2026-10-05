@@ -5,18 +5,12 @@
  * NO JAVASCRIPT, AND NO MOBILE MENU COMPONENT.
  *
  * The constitution says a hydration directive is only justified when the
- * interaction cannot reasonably be built from native HTML and CSS. The two
- * primary links fit on a small screen unaided, so there is nothing to
+ * interaction cannot reasonably be built from native HTML and CSS. The name
+ * and one primary link fit on a small screen unaided, so there is nothing to
  * disclose, let alone anything needing JS to disclose it.
  *
- * THE SOCIAL ROW IS HIDDEN BELOW `md`, AND THAT IS THE REASON THE ABOVE STILL
- * HOLDS. Five links plus a wordmark and a toggle do not fit on a 375px phone;
- * they wrap to three lines, and this header is `sticky`, so those lines would
- * eat a fixed slice of every viewport on every page for the whole scroll. The
- * profiles are supplementary and the footer carries the same three on every
- * page, so hiding them narrow costs a phone user nothing and keeps the header
- * one line. No content is lost, which is what makes `display: none` honest
- * here rather than a dodge.
+ * Social profiles and the source link live in the footer only. The header is
+ * `sticky`, so every line it wraps to costs a fixed slice of every viewport.
  *
  * If the PRIMARY nav ever outgrows its line, the next step is a native
  * <details>/<summary> disclosure -- still zero JS. An island is the last
@@ -24,7 +18,6 @@
  */
 import ThemeToggle from '../ui/ThemeToggle.astro';
 import { primaryNav } from '../../data/navigation';
-import { person } from '../../data/person';
 import { SITE_NAME } from '../../data/site';
 import { isActivePath } from '../../utils/urls';
 
@@ -83,80 +76,6 @@ const current = Astro.url.pathname;
         }
         </ul>
       </nav>
-
-      {
-        /*
-          Hidden below `md` -- see the note at the top of this file.
-
-          Separated from the primary nav by an ink hairline rather than by
-          extra space. DESIGN.md says to separate with whitespace first and
-          stop as soon as it reads, but at this density it did not read: the
-          two navs are the same size, weight and case, so a wider gap looked
-          like an uneven gap rather than a boundary. A 1px full-strength rule
-          is the next step and the most characteristic mark in the system.
-
-          These are external and can never be the current page, so unlike the
-          primary nav there is no aria-current or active treatment here.
-
-          rel="me" repeats the footer's identity claim. Asserting it twice on
-          one page is harmless -- verifiers look for the link, not for exactly
-          one of it -- and omitting it on the more prominent of the two
-          placements would be the odd choice.
-        */
-      }
-      {
-        person.socialProfiles.length > 0 && (
-          <nav
-            aria-label="Social profiles"
-            class="hidden md:block md:border-l md:border-line md:pl-6"
-          >
-            <ul class="flex items-center gap-x-6">
-              {person.socialProfiles.map((profile) => (
-                <li>
-                  <a
-                    href={profile.url}
-                    rel="me noopener"
-                    class="font-mono text-kicker tracking-[0.08em] text-ink-muted uppercase no-underline hover:text-accent-hover"
-                  >
-                    {profile.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-
-      {
-        /*
-          FORK THIS SITE. The one call to action in the header, which is why it
-          is styled as a bordered box rather than carried in `primaryNav` with
-          the other links -- and why it has no `aria-current`. It is an action,
-          not a location.
-
-          A BORDERED LINK, NOT AN ACCENT FILL. DESIGN.md keeps the accent for
-          links, the focus ring and a selected state, "not a button fill on
-          every button". Colour comes from `.kicker` plus a `text-ink`
-          override, the same move as ThemeToggle.
-
-          HIDDEN BELOW `lg`, AND THE BREAKPOINT IS MEASURED. At `md` the header
-          went from 51px to 80px at exactly 768px: wordmark, two nav links,
-          three socials, this and the toggle do not fit an iPad in portrait, so
-          it wrapped. The header is sticky, so that second line costs a fixed
-          slice of every viewport on every page. It fits from ~820px; `lg` is
-          the nearest standard stop with headroom. The footer carries the same
-          destination at every width, which is what makes hiding it honest.
-
-          It points at /open-source/, not at GitHub; that file's header
-          explains why.
-        */
-      }
-      <a
-        href="/open-source/"
-        class="kicker hidden border border-line px-3 py-1 text-ink no-underline lg:inline-block hover:border-accent hover:text-accent-hover"
-      >
-        Fork this site
-      </a>
 
       <ThemeToggle />
     </div>

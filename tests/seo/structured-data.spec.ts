@@ -1,6 +1,27 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
+import { sameAs } from '../../src/data/person';
 import { allPages, manifest } from './manifest';
+
+/**
+ * The Person node as built, read from the homepage.
+ *
+ * The manifest records which types and `@id`s a page has, not their
+ * properties, so this reads the emitted HTML the way the feed spec reads
+ * dist/rss.xml. One page is enough: the node is defined once, at one `@id`,
+ * which the test below asserts for every page.
+ */
+function builtPerson(): Record<string, unknown> {
+  const html = readFileSync(join('dist', 'index.html'), 'utf8');
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  const nodes = blocks.flatMap((m) => JSON.parse(m[1]!)['@graph'] as Record<string, unknown>[]);
+  const person = nodes.find((node) => node['@type'] === 'Person');
+  if (!person) throw new Error('no Person node on the homepage');
+  return person;
+}
 
 describe('structured data', () => {
   it.each(allPages.map((page) => [page.url, page] as const))(
@@ -51,6 +72,23 @@ describe('structured data', () => {
 
     expect([...personIds]).toEqual([`${manifest.site}/#person`]);
     expect([...websiteIds]).toEqual([`${manifest.site}/#website`]);
+  });
+
+  it('the Person claims no profile the site does not link to', () => {
+    // Derived from the same array the footer renders. sameAs is an identity
+    // claim, so an extra entry is a misidentification, not a harmless extra.
+    expect(builtPerson()['sameAs']).toEqual([...sameAs]);
+  });
+
+  it('the Person claims no role or employer', () => {
+    /*
+     * Schema must describe what the page shows, and no page states a job title
+     * or an employer as a fact about the Owner. Add these back only together
+     * with visible content that says the same thing.
+     */
+    const person = builtPerson();
+    expect(person).not.toHaveProperty('jobTitle');
+    expect(person).not.toHaveProperty('worksFor');
   });
 
   it.each(allPages.map((page) => [page.url, page] as const))(

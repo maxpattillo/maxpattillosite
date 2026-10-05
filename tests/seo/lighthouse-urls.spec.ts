@@ -26,6 +26,8 @@ interface LighthouseConfig {
 const config = JSON.parse(readFileSync('lighthouserc.json', 'utf8')) as LighthouseConfig;
 const urls = config.ci.collect.url;
 
+const isArticle = (url: string) => /^\/writing\/[^/]+\/index\.html$/.test(url);
+
 describe('lighthouse budget URLs', () => {
   it('has a non-empty list to check', () => {
     // Guards against this suite passing because the list was emptied.
@@ -41,14 +43,20 @@ describe('lighthouse budget URLs', () => {
     ).toBe(true);
   });
 
-  it('still measures an article', () => {
+  /*
+   * Skipped, visibly, while no Article is published: there is nothing to cover
+   * yet. The first published Article turns it back on.
+   */
+  const hasArticles = [...emittedFiles].some(isArticle);
+
+  it.skipIf(!hasArticles)('still measures an article', () => {
     /*
      * The budget is meaningless if it only ever sees the chrome-heavy index
      * pages. An article is the page type most of the site is made of, and the
      * one whose LCP a cover image can actually move -- so losing article
      * coverage to a careless edit should fail, not pass quietly.
      */
-    const articles = urls.filter((url) => /^\/writing\/[^/]+\/index\.html$/.test(url));
+    const articles = urls.filter(isArticle);
     expect(articles, 'no article is covered by the Lighthouse budget').not.toEqual([]);
   });
 });

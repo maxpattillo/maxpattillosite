@@ -14,13 +14,13 @@
  * Never hard-code the domain anywhere else -- `tests/seo/urls.spec.ts` fails
  * the build if a built page contains a hard-coded origin outside this constant.
  */
-export const SITE_URL = 'https://brycedecora.com';
+export const SITE_URL = 'https://maxpattillo.com';
 
-export const SITE_NAME = 'Bryce DeCora';
+export const SITE_NAME = 'Max Pattillo';
 
 /**
  * Where this site's source lives. Consumed by `/open-source/`, which is the
- * single place the repository is linked from; the header and footer both point
+ * single place the repository is linked from; the footer's "Source" link points
  * at that page rather than at GitHub.
  *
  * DELIBERATELY NOT IN `person.socialProfiles`. That array feeds schema.org
@@ -29,7 +29,7 @@ export const SITE_NAME = 'Bryce DeCora';
  * would make a false entity-resolution claim on every page — the exact failure
  * the note on `socialProfiles` in person.ts warns about.
  */
-export const SOURCE_REPO_URL = 'https://github.com/closebotai/brycedecora';
+export const SOURCE_REPO_URL = 'https://github.com/maxpattillo/maxpattillosite';
 
 /**
  * Fallback social share image, relative to the site root. Used whenever a page
@@ -109,8 +109,11 @@ export const TRAILING_SLASH: 'always' | 'never' = 'always';
  * route listed here is both absent from the sitemap and carries `noindex`.
  *
  * Pathnames must be written in canonical form (leading + trailing slash).
+ *
+ * Empty for now: every page this site has is meant to be found. The 404 is
+ * noindex through its own `robots` prop, not through this list.
  */
-export const NOINDEX_ROUTES: readonly string[] = ['/thanks/'];
+export const NOINDEX_ROUTES: readonly string[] = [];
 
 /** True when the given pathname should be indexed and appear in the sitemap. */
 export function isIndexable(pathname: string): boolean {

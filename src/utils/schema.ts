@@ -17,7 +17,6 @@
  *     ratings, reviews, or counts -- data the site has no legitimate source
  *     for. Schema must describe what the page actually shows.
  */
-import portrait from '../assets/bryce-decora.png';
 import { person, sameAs } from '../data/person';
 import { DEFAULT_LOCALE, SITE_NAME } from '../data/site';
 
@@ -56,6 +55,9 @@ function compact(node: JsonLdNode): JsonLdNode {
 
 /** The canonical Person node. Defined once; referenced everywhere else. */
 export function buildPerson(site: URL): JsonLdNode {
+  // compact() drops the optional properties the entity leaves out, so a role
+  // or employer appears here only once person.ts states one.
+  const { worksFor, email, knowsAbout } = person;
   return compact({
     '@type': 'Person',
     '@id': ids.person(site),
@@ -65,22 +67,14 @@ export function buildPerson(site: URL): JsonLdNode {
     jobTitle: person.jobTitle,
     description: person.description,
     url: `${site.origin}/`,
-    email: `mailto:${person.email}`,
-    worksFor: compact({
-      '@type': 'Organization',
-      name: person.worksFor.name,
-      url: person.worksFor.url,
-    }),
-    knowsAbout: [...person.knowsAbout],
+    email: email ? `mailto:${email}` : undefined,
+    worksFor: worksFor
+      ? { '@type': 'Organization', name: worksFor.name, url: worksFor.url }
+      : undefined,
+    knowsAbout: knowsAbout ? [...knowsAbout] : undefined,
     // Derived from the same array the footer renders, so the graph can never
     // claim a profile the site does not link to. Omitted entirely while empty.
     sameAs: [...sameAs],
-    /*
-     * Google lists `image` among the properties that help identify a Person.
-     * `portrait.src` is the post-optimisation path, so this URL always points
-     * at the asset that actually shipped rather than at a guessed filename.
-     */
-    image: new URL(portrait.src, site).href,
   });
 }
 
@@ -108,7 +102,7 @@ export interface WebPageOptions {
   canonical: string;
   title: string;
   description: string;
-  /** Use 'ProfilePage' for /about/, 'CollectionPage' for index listings. */
+  /** 'ProfilePage' for a page about the Person, 'CollectionPage' for index listings. */
   type?: 'WebPage' | 'ProfilePage' | 'CollectionPage' | 'ContactPage';
   /** Set when the page renders a breadcrumb trail. */
   hasBreadcrumb?: boolean;

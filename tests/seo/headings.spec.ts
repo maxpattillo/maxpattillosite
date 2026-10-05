@@ -20,6 +20,11 @@ describe('headings', () => {
     },
   );
 
+  it('the homepage h1 is the Owner\'s name', () => {
+    const home = allPages.find((page) => page.url === '/');
+    expect(home?.h1).toEqual(['Max Pattillo']);
+  });
+
   it.each(allPages.map((page) => [page.url, page] as const))(
     '%s starts its heading outline with the h1',
     (_url, page) => {
