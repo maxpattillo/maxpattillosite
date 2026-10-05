@@ -23,6 +23,7 @@ import { readArticles, articleCardFile } from '../../scripts/og-articles.mjs';
 import {
   renderDefaultCard,
   renderArticleCard,
+  renderFavicon,
   rasterise,
   toPixels,
   CARD_W,
@@ -75,6 +76,14 @@ describe('share cards are current', () => {
       resolve(PUBLIC, DEFAULT_OG_IMAGE.replace(/^\//, '')),
     );
     expect(fraction, `default ${STALE}`).toBeLessThan(TOLERANCE);
+  });
+
+  it('the favicon matches the generator', () => {
+    // An SVG is text, so it is compared exactly. It is drawn in the same pixel
+    // font and lime as the cards, and this keeps the two from drifting apart.
+    expect(readFileSync(resolve(PUBLIC, 'favicon.svg'), 'utf8'), `favicon ${STALE}`).toBe(
+      renderFavicon(),
+    );
   });
 
   it.each(articles.map((article) => [article.slug, article] as const))(

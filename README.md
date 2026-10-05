@@ -196,9 +196,8 @@ data and a byline all pointing at them. Change these first:
 | Chat widget | `CLOSEBOT_SOURCE` in your own `.env` and build variables |
 | Articles, images, share cards | `src/content/`, `src/assets/`, `public/og/` |
 | Worker name | `wrangler.jsonc` |
-| Security contact | `public/.well-known/security.txt` |
 
-Then run `pnpm og` to regenerate the share cards from
+Then run `pnpm og` to regenerate the share cards and favicon from
 your own values, and `pnpm test`.
 
 ## License

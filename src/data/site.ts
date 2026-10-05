@@ -47,10 +47,10 @@ export const DEFAULT_OG_IMAGE = '/og/default.png';
  *
  * This is the text a screen reader reads out in place of a link preview, and
  * on most platforms it is the only description of the image there will ever be.
- * It was `'Bryce DeCora'`, which merely repeated the title next to it.
+ * The bare name would merely repeat the title next to it. If the card in
+ * `scripts/og-card.mjs` is redrawn, this has to be rewritten with it.
  */
-export const DEFAULT_OG_IMAGE_ALT =
-  'Bryce DeCora, co-founder of CloseBot — the name set in pixel type on a cream card, beside a coffee-bean mark.';
+export const DEFAULT_OG_IMAGE_ALT = `${SITE_NAME} — the name in white pixel type, inside a thick-bordered block with an acid-lime offset shadow, on a near-black card.`;
 
 /**
  * Share-card dimensions.
@@ -81,7 +81,7 @@ export const articleOgImage = (slug: string) => `/og/writing/${slug}.png`;
 
 /** Alt text for an article's share card, given its title. */
 export const articleOgImageAlt = (title: string) =>
-  `"${title}" — an article by Bryce DeCora, on a cream card in pixel type.`;
+  `"${title}" — an article by ${SITE_NAME}, the title in white pixel type inside a thick-bordered block with an acid-lime offset shadow, on a near-black card.`;
 
 export const DEFAULT_LOCALE = 'en_US';
 

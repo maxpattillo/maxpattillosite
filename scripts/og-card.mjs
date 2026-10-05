@@ -7,10 +7,11 @@
  * the committed PNG -- which is the whole reason the cards can be generated
  * artefacts without silently going stale when an article title changes.
  *
- * Nothing here touches the filesystem except reading global.css for the
- * palette, and nothing here writes.
+ * The favicon is drawn here too, from the same font and the same lime, so the
+ * tab and the link preview cannot drift apart.
  *
- * See "The share card" in DESIGN.md for the decisions this file implements.
+ * Nothing here touches the filesystem except reading global.css for the
+ * palette and site.ts for the name, and nothing here writes.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 import sharp from 'sharp';
 
-import { layoutText, textWidth, textHeight, ADVANCE } from './pixel-font.mjs';
+import { layoutText, textWidth, textHeight, ADVANCE, GLYPH_H } from './pixel-font.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -82,7 +83,7 @@ function oklchToHex(L, C, hDeg) {
   const hex = linear
     .map((v) => {
       // Gamma-encode, then clamp. Clamping after encoding rather than before
-      // keeps in-gamut channels exact; all of our tokens are well inside sRGB.
+      // keeps in-gamut channels exact; all of our colours are inside sRGB.
       const encoded = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
       const byte = Math.round(Math.min(1, Math.max(0, encoded)) * 255);
       return byte.toString(16).padStart(2, '0');
@@ -97,41 +98,61 @@ const COLOR = {
   surface: token('surface'),
   surfaceRaised: token('surface-raised'),
   ink: token('ink'),
-  accent: token('accent'),
+  /*
+   * NOT A TOKEN YET. The agreed direction is an acid-lime accent, but the
+   * site's `--color-accent` is still the neutral placeholder until the design
+   * prototype lands. The card and favicon carry the direction now; when the
+   * token becomes lime, read it here and delete this line.
+   */
+  lime: oklchToHex(0.92, 0.22, 125),
 };
+
+/* ---- The name: read, not retyped --------------------------------------- */
+
+/**
+ * The Owner's name, from `SITE_NAME` in src/data/site.ts.
+ *
+ * Read with a pattern for the same reason as the palette: that file is
+ * TypeScript and this one runs under plain Node, and a second copy of the name
+ * here is how a fork ends up sharing someone else's face.
+ */
+function readSiteName() {
+  const ts = readFileSync(resolve(ROOT, 'src/data/site.ts'), 'utf8');
+  const match = ts.match(/export const SITE_NAME = '([^']+)';/);
+  if (!match) {
+    throw new Error(
+      `og-card: SITE_NAME not found in src/data/site.ts. If it was renamed or ` +
+        `reshaped, update the pattern here too.`,
+    );
+  }
+  return match[1];
+}
+
+const NAME = readSiteName();
 
 /* ---- Geometry ----------------------------------------------------------- */
 
-/*
- * The 4px unit from DESIGN.md, scaled up. The card is ~2.5x a panel as it
- * appears on the page, so hairlines, padding and the drop shadow are all
- * multiplied to match -- a literal 1px border would disappear the moment Slack
- * renders this at a third of its size.
- */
 export const CARD_W = 1200;
 export const CARD_H = 630;
 
-const PANEL = { x: 40, y: 40, w: 1100, h: 534 };
-const SHADOW = 16; // the panel's hard offset shadow; 3px on the page
-const BORDER = 4; // the ink hairline; 1px on the page
-const PAD = 48; // content inset inside the panel
+/*
+ * The block. Thick border and a hard offset shadow, never a blur. Scaled for a
+ * card that Slack renders at a third of its size: a hairline would vanish.
+ */
+const BORDER = 8;
+const SHADOW = 20;
+const PAD = 48; // content inset inside the border
 
-const TITLEBAR_H = 64;
-const BAND_H = 110; // the inverted band at the foot of the panel
+/** Clear space between the block (with its shadow) and the card edge. */
+const MARGIN = 40;
 
-const BODY_Y = PANEL.y + TITLEBAR_H;
-const BAND_Y = PANEL.y + PANEL.h - BAND_H;
-const INNER_X = PANEL.x + BORDER;
-const INNER_RIGHT = PANEL.x + PANEL.w - BORDER;
-const TEXT_X = PANEL.x + PAD;
-
-/** Widest a line of body text may be before it has to wrap. */
-const MEASURE = INNER_RIGHT - PAD - TEXT_X;
+/** The tallest the block's content may be and still clear the card edges. */
+const MAX_CONTENT_H = CARD_H - 2 * MARGIN - SHADOW - 2 * (BORDER + PAD);
 
 /* ---- The square safe zone ----------------------------------------------- */
 
 /*
- * THE CENTRE SQUARE, AND WHY THE DEFAULT CARD IS COMPOSED INSIDE IT.
+ * THE CENTRE SQUARE, AND WHY THE TYPE IS COMPOSED INSIDE IT.
  *
  * A 1.91:1 card is what the large unfurl wants, and it is what we emit. But a
  * link posted in a Facebook comment, a WhatsApp reply, or an iMessage bubble is
@@ -139,22 +160,13 @@ const MEASURE = INNER_RIGHT - PAD - TEXT_X;
  * cropping this image to 630x630 -- taking x 285..915 and discarding a third of
  * the card from each side.
  *
- * The card used to set the name flush left at x=88, which is 197px outside that
- * window. So the one thing the card exists to say arrived as "YCE / CORA".
- * Nothing else was wrong with it: at full width it read perfectly, which is
- * exactly why it survived -- the failure is invisible unless you look at the
- * crop.
+ * So the rule is: ANYTHING THAT MUST BE READ GOES INSIDE THE SAFE ZONE. The
+ * block's border and shadow may run outside it, because they crop to a
+ * fragment of themselves rather than to a fragment of a word.
  *
- * So the rule is: ANYTHING THAT MUST BE READ GOES INSIDE THE SAFE ZONE.
- * Everything else -- the panel, the title bar, the band --
- * may run outside it, because those crop to a fragment of themselves rather
- * than to a fragment of a word. A sliced title bar still reads as a title bar.
- *
- * Only the display name is held to this. The kicker and the band line are set
- * inside it too where they fit, but at the size a square thumbnail is actually
- * displayed -- 100-150px wide in every one of those contexts -- type below the
- * display scale is not legible at all, so optimising it for the crop would be
- * arranging pixels nobody can resolve.
+ * This is also why every card is centred: left-aligned type is outside the
+ * window at every size, and centring is the only position stable under a
+ * symmetric crop.
  */
 const SAFE_W = CARD_H; // a 1:1 crop takes the full height, so the square is H x H
 const SAFE_X = Math.round((CARD_W - SAFE_W) / 2);
@@ -179,10 +191,10 @@ const SAFE_MEASURE = SAFE_W - SAFE_PAD * 2;
  */
 function assertInSafeZone(label, x, width) {
   /*
-   * Checked against the PADDED box. Centring made the unpadded check almost
-   * useless: a centred line only breaches the raw square once it is wider than
-   * the whole 630px of it, so the name could grow to fill the crop edge to edge
-   * and still pass. The padding is the tolerance, so the padding is the bound.
+   * Checked against the PADDED box. A centred line only breaches the raw
+   * square once it is wider than the whole 630px of it, so an unpadded check
+   * would let the name fill the crop edge to edge and still pass. The padding
+   * is the tolerance, so the padding is the bound.
    */
   const left = SAFE_X + SAFE_PAD;
   const right = SAFE_X + SAFE_W - SAFE_PAD;
@@ -194,17 +206,6 @@ function assertInSafeZone(label, x, width) {
       `or set it at a smaller scale.`,
   );
 }
-
-/*
- * The display scale is 15, not the 16 it was.
- *
- * "DeCora" is the longest line and sets the ceiling: at 16 it is 560px wide and
- * leaves 35px of air inside a 630px crop, which assumes every platform crops
- * exactly centred. At 15 it is 525px and leaves 52px a side, which survives a
- * crop that is a few percent off. One scale step is not a visible loss; a name
- * with its first letter shaved off is.
- */
-const SCALE = { titleBar: 4, kicker: 3, display: 15, field: 3 };
 
 /* ---- Drawing primitives ------------------------------------------------- */
 
@@ -219,8 +220,8 @@ function newCard() {
   return { parts: [] };
 }
 
-const rect = (card, x, y, w, h, fill, extra = '') =>
-  card.parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${extra}/>`);
+const rect = (card, x, y, w, h, fill) =>
+  card.parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`);
 
 /** Pixel type, emitted as one path per string. */
 const text = (card, str, x, y, scale, fill) => {
@@ -230,102 +231,53 @@ const text = (card, str, x, y, scale, fill) => {
   card.parts.push(`<path d="${d}" fill="${fill}"/>`);
 };
 
-/**
- * A dotted leader, as in a table of contents (DESIGN.md, "Texture").
- *
- * Not only ornament: it ties the left-hand text block to whatever sits on the
- * right across the gap the display block opens up, so the empty middle reads
- * as space rather than as an unfinished layout.
- */
-const leader = (card, from, to, y, scale, fill) => {
-  for (let x = from; x + scale <= to; x += scale * 3) {
-    rect(card, x, y, scale, scale, fill);
-  }
-};
-
-/**
- * The same rule laid out from its RIGHT end, for the flank left of a centred
- * label.
- *
- * `leader` starts at `from` and stops wherever the last whole dot fits, which
- * leaves a ragged end. On the left flank that ragged end would land against
- * the label -- the one place it is conspicuous -- and the two flanks would
- * visibly fail to mirror each other.
- */
-const leaderBack = (card, from, to, y, scale, fill) => {
-  for (let x = to - scale; x >= from; x -= scale * 3) {
-    rect(card, x, y, scale, scale, fill);
-  }
-};
+/** Height of `count` lines of pixel type set `step` apart at `scale`. */
+const linesHeight = (count, scale, step) => (count - 1) * step + textHeight(scale);
 
 /** Left edge that centres a string of `width` on the card's vertical axis. */
 const CENTER_X = Math.round(CARD_W / 2);
 const centerX = (width) => CENTER_X - Math.round(width / 2);
 
-/* ---- Shared chrome ------------------------------------------------------ */
-
 /**
- * Everything every card has: the page, the hard shadow, the panel, the title
- * bar, and the inverted band at the foot.
- *
- * The caller fills the body between `BODY_Y` and `BAND_Y` and supplies the
- * band's own line of text.
+ * Centred lines of pixel type, each checked against the square crop.
+ * Returns the y just below the last line.
  */
-function drawShell(card, { titleBarLeft, titleBarRight, bandText }) {
-  // The page behind the window.
-  rect(card, 0, 0, CARD_W, CARD_H, COLOR.surface);
-
-  // Hard offset shadow. Never a blur -- DESIGN.md, "The panel".
-  rect(card, PANEL.x + SHADOW, PANEL.y + SHADOW, PANEL.w, PANEL.h, COLOR.ink);
-
-  // Panel body, then the title bar over its top edge.
-  rect(card, PANEL.x, PANEL.y, PANEL.w, PANEL.h, COLOR.surfaceRaised);
-  rect(card, PANEL.x, PANEL.y, PANEL.w, TITLEBAR_H, COLOR.ink);
-
-  const barY = PANEL.y + (TITLEBAR_H - textHeight(SCALE.titleBar)) / 2;
-  text(card, titleBarLeft, INNER_X + 16, barY, SCALE.titleBar, COLOR.surface);
-  if (titleBarRight) {
-    text(
-      card,
-      titleBarRight,
-      INNER_RIGHT - 16 - textWidth(titleBarRight, SCALE.titleBar),
-      barY,
-      SCALE.titleBar,
-      COLOR.surface,
-    );
-  }
-
-  /* ---- The band ------------------------------------------------------- */
-
-  const band = { x: INNER_X, y: BAND_Y, w: INNER_RIGHT - INNER_X, h: BAND_H };
-
-  card.parts.push(
-    `<clipPath id="band"><rect x="${band.x}" y="${band.y}" width="${band.w}" height="${band.h}"/></clipPath>`,
-    `<g clip-path="url(#band)">`,
-  );
-
-  rect(card, band.x, band.y, band.w, band.h, COLOR.ink);
-
-  text(
-    card,
-    bandText,
-    TEXT_X,
-    band.y + (band.h - textHeight(SCALE.field)) / 2,
-    SCALE.field,
-    COLOR.surface,
-  );
-
-  return { band, closeShell: () => card.parts.push('</g>') };
+function drawLines(card, lines, y, scale, step, fill, label) {
+  lines.forEach((line, i) => {
+    const width = textWidth(line, scale);
+    const x = centerX(width);
+    text(card, line, x, y + i * step, scale, fill);
+    assertInSafeZone(`${label} ${JSON.stringify(line)}`, x, width);
+  });
+  return y + linesHeight(lines.length, scale, step);
 }
 
-/** Hairlines last, so nothing paints over them. */
-function drawHairlines(card, band) {
-  rect(card, band.x, band.y - BORDER, band.w, BORDER, COLOR.ink);
-  card.parts.push(
-    `<rect x="${PANEL.x + BORDER / 2}" y="${PANEL.y + BORDER / 2}" ` +
-      `width="${PANEL.w - BORDER}" height="${PANEL.h - BORDER}" ` +
-      `fill="none" stroke="${COLOR.ink}" stroke-width="${BORDER}"/>`,
-  );
+/**
+ * The page, the lime shadow, and the bordered block, centred on the card
+ * around a content box of `contentW` x `contentH`. Returns the content box's
+ * top edge; the caller sets the type inside it.
+ */
+function drawBlock(card, contentW, contentH) {
+  // The name's scale is chosen by width alone, so a long name could still run
+  // off the card vertically. Nobody re-opens a generated PNG, so throw.
+  if (contentH > MAX_CONTENT_H) {
+    throw new Error(
+      `og-card: content is ${contentH}px tall, more than the ${MAX_CONTENT_H}px the block ` +
+        `can hold. Shorten it, or set it at a smaller scale.`,
+    );
+  }
+  const w = contentW + 2 * (BORDER + PAD);
+  const h = contentH + 2 * (BORDER + PAD);
+  const x = centerX(w);
+  // Centre the block and its shadow together, so the pair sits level.
+  const y = Math.round((CARD_H - h - SHADOW) / 2);
+
+  rect(card, 0, 0, CARD_W, CARD_H, COLOR.surface);
+  rect(card, x + SHADOW, y + SHADOW, w, h, COLOR.lime);
+  rect(card, x, y, w, h, COLOR.ink);
+  rect(card, x + BORDER, y + BORDER, w - 2 * BORDER, h - 2 * BORDER, COLOR.surfaceRaised);
+
+  return y + BORDER + PAD;
 }
 
 function toSvg(card) {
@@ -379,7 +331,7 @@ function fitText(str, { maxWidth, maxHeight, scales, lineStep }) {
     if (!lines) continue;
 
     const step = lineStep(scale);
-    const height = (lines.length - 1) * step + textHeight(scale);
+    const height = linesHeight(lines.length, scale, step);
     if (height <= maxHeight) return { lines, scale, step };
   }
 
@@ -392,16 +344,9 @@ function fitText(str, { maxWidth, maxHeight, scales, lineStep }) {
 /*
  * Leading, in font units, where the glyph box is 7.
  *
- * DESIGN.md sets display leading at 0.82, which is below 1 on purpose. A
- * bitmap face cannot take that literally: its glyph box has no internal
- * leading, so 0.82 would overlap the ink of one line into the next and the
- * type would become unreadable rather than tight.
- *
- * TWO VALUES, because the two cards are setting different things. A name is
- * two words and one unit of gap makes it a block, which is the near-collision
- * the display rule is after. An article title is a sentence that has to be
- * *read* off a thumbnail, and at one unit its lines visibly fused. Two units
- * is still tighter than any default and it stays legible at unfurl size.
+ * TWO VALUES, because the two cards set different things. A name is two words
+ * and one unit of gap makes it a block. An article title is a sentence that
+ * has to be *read* off a thumbnail, and at one unit its lines visibly fuse.
  */
 const nameStep = (scale) => 8 * scale;
 const titleStep = (scale) => 9 * scale;
@@ -409,139 +354,95 @@ const titleStep = (scale) => 9 * scale;
 /* ---- The cards ---------------------------------------------------------- */
 
 /*
- * Every string below also appears on the site: the title bar is the domain,
- * the kicker is the homepage's `kicker` prop, the display line is its
- * `heading`, and the field line compresses its meta description. The card is
- * the hero, not a second piece of positioning written for social.
- *
  * NO NUMBERS. A committed PNG cannot be re-derived from build output, so any
  * figure baked into one becomes a fabricated metric the moment it changes,
- * with no test watching -- see AGENTS.md. The only figures on these cards are
- * the default's own dimensions and a joke version number.
+ * with no test watching -- see AGENTS.md.
  */
 
-/** The fallback card: the homepage hero, as a window. */
+/*
+ * The display scale for the name. The longest word sets the ceiling: it has
+ * to clear the padded square crop, and one scale step larger does not.
+ */
+const NAME_LINES = NAME.split(/\s+/);
+const NAME_SCALE = Math.floor(
+  SAFE_MEASURE / Math.max(...NAME_LINES.map((line) => textWidth(line, 1))),
+);
+
+/** The fallback card: the Owner's name, alone, in the block. */
 export function renderDefaultCard() {
   const card = newCard();
-  const { band, closeShell } = drawShell(card, {
-    titleBarLeft: 'brycedecora.com v0.1',
-    titleBarRight: '1200x630',
-    bandText: 'AI systems that handle sales conversations',
-  });
 
-  closeShell();
+  const contentW = Math.max(...NAME_LINES.map((line) => textWidth(line, NAME_SCALE)));
+  const contentH = linesHeight(NAME_LINES.length, NAME_SCALE, nameStep(NAME_SCALE));
 
-  const kickerY = BODY_Y + 44;
-  const kicker = 'Co-founder / CloseBot';
-  const kickerW = textWidth(kicker, SCALE.kicker);
-  const kickerX = centerX(kickerW);
-  text(card, kicker, kickerX, kickerY, SCALE.kicker, COLOR.accent);
-  assertInSafeZone('the kicker', kickerX, kickerW);
+  const top = drawBlock(card, contentW, contentH);
+  drawLines(card, NAME_LINES, top, NAME_SCALE, nameStep(NAME_SCALE), COLOR.ink, 'the name line');
 
-  /*
-   * Leaders on BOTH flanks now, running out to the panel's insets.
-   *
-   * A centred label with a rule on one side only reads as a left-aligned line
-   * that drifted. Two symmetric flanks are what make the centring deliberate,
-   * and they are the one element wide enough to hold the full width of the
-   * card -- without them the body is three short lines marooned in the middle
-   * of 1048px of empty panel.
-   */
-  const leaderY = kickerY + textHeight(SCALE.kicker) - SCALE.kicker;
-  leaderBack(card, TEXT_X, kickerX - 24, leaderY, SCALE.kicker, COLOR.accent);
-  leader(card, kickerX + kickerW + 24, INNER_RIGHT - PAD, leaderY, SCALE.kicker, COLOR.accent);
-
-  const displayY = kickerY + textHeight(SCALE.kicker) + 36;
-  ['Bryce', 'DeCora'].forEach((line, i) => {
-    const width = textWidth(line, SCALE.display);
-    const x = centerX(width);
-    text(card, line, x, displayY + i * nameStep(SCALE.display), SCALE.display, COLOR.ink);
-    assertInSafeZone(`the display line ${JSON.stringify(line)}`, x, width);
-  });
-
-  drawHairlines(card, band);
   return toSvg(card);
 }
 
+/** The byline under an article title: small, and in the accent. */
+const BYLINE_SCALE = 4;
+const BYLINE_GAP = 36;
+
 /**
- * An article's card. The title is the hero; the name moves to the band.
- *
- * This is the same two-register split the site itself uses (DESIGN.md,
- * "Layout registers"): on the default card the name is the display type,
- * because the card is introducing the site. Here the article's title takes
- * the display slot, because the thing being shared is the writing.
+ * An article's card. The title takes the display slot, because the thing being
+ * shared is the writing; the name drops to a byline beneath it.
  *
  * `title` is the page's real `<h1>`, read out of the build manifest by
  * generate-og.mjs -- not re-derived from frontmatter. The card and the page
  * cannot disagree about what the article is called.
+ *
+ * The block is always the full safe measure wide, so a short title and a long
+ * one produce the same silhouette rather than two attempts at one design.
  */
 export function renderArticleCard({ title }) {
   const card = newCard();
-  const { band, closeShell } = drawShell(card, {
-    titleBarLeft: 'brycedecora.com/writing/',
-    titleBarRight: '',
-    bandText: 'Bryce DeCora · Co-founder, CloseBot',
-  });
 
-  closeShell();
-
-  const kickerY = BODY_Y + 44;
-  const kicker = 'Writing';
-  const kickerW = textWidth(kicker, SCALE.kicker);
-  const kickerX = centerX(kickerW);
-  text(card, kicker, kickerX, kickerY, SCALE.kicker, COLOR.accent);
-
-  const leaderY = kickerY + textHeight(SCALE.kicker) - SCALE.kicker;
-  leaderBack(card, TEXT_X, kickerX - 24, leaderY, SCALE.kicker, COLOR.accent);
-  leader(card, kickerX + kickerW + 24, INNER_RIGHT - PAD, leaderY, SCALE.kicker, COLOR.accent);
-
-  const regionY = kickerY + textHeight(SCALE.kicker) + 36;
-  const regionH = BAND_Y - regionY - 24;
-
-  /*
-   * ARTICLE TITLES WRAP AT THE SQUARE, NOT AT THE PANEL.
-   *
-   * Same reason as the default card: a line set across the full 1000px measure
-   * loses its first and last few characters to a centre crop, and a title is
-   * the one thing on the card that has to be read.
-   *
-   * The cost is real and worth stating. A 534px measure is barely half the
-   * panel, so titles wrap to more lines and settle at a smaller scale than the
-   * old full-width setting chose -- the longest of them lands at 5 rather than
-   * the 10 or 12 it used to. The scales list is extended down to 5 for exactly
-   * that reason; without it, a long title throws instead of setting.
-   *
-   * That is the trade: a slightly quieter title on the large unfurl, against a
-   * title that is readable rather than sliced everywhere else.
-   */
+  const bylineH = textHeight(BYLINE_SCALE);
   const fit = fitText(title, {
     maxWidth: SAFE_MEASURE,
-    maxHeight: regionH,
-    // Never as large as the name on the default card: a title is a sentence,
-    // and a sentence at 16x would wrap to six lines of two words.
-    scales: [12, 11, 10, 9, 8, 7, 6, 5],
+    maxHeight: MAX_CONTENT_H - BYLINE_GAP - bylineH,
+    // Never as large as the name: a title is a sentence, and a sentence at the
+    // name's scale would wrap to six lines of two words.
+    scales: [10, 9, 8, 7, 6, 5],
     lineStep: titleStep,
   });
 
-  /*
-   * Centred in the space between the kicker and the band, not hung from its
-   * top. Titles differ in length by a factor of two, so a fixed top edge
-   * leaves a short one marooned with a band of dead space beneath it. Centring
-   * is what makes a two-line card and a four-line card look like the same
-   * design rather than two attempts at one.
-   */
-  const blockH = (fit.lines.length - 1) * fit.step + textHeight(fit.scale);
-  const displayY = regionY + Math.round((regionH - blockH) / 2);
+  const titleH = linesHeight(fit.lines.length, fit.scale, fit.step);
+  const top = drawBlock(card, SAFE_MEASURE, titleH + BYLINE_GAP + bylineH);
 
-  fit.lines.forEach((line, i) => {
-    const width = textWidth(line, fit.scale);
-    const x = centerX(width);
-    text(card, line, x, displayY + i * fit.step, fit.scale, COLOR.ink);
-    assertInSafeZone(`the title line ${JSON.stringify(line)}`, x, width);
-  });
+  const titleBottom = drawLines(card, fit.lines, top, fit.scale, fit.step, COLOR.ink, 'the title line');
+  drawLines(card, [NAME], titleBottom + BYLINE_GAP, BYLINE_SCALE, 0, COLOR.lime, 'the byline');
 
-  drawHairlines(card, band);
   return toSvg(card);
+}
+
+/* ---- The favicon -------------------------------------------------------- */
+
+/**
+ * A lime square with the Owner's initials in black.
+ *
+ * Two 5x7 glyphs and their one-unit gap are 11 units wide, so a 15-unit square
+ * centres them exactly with 2 units either side and 4 above and below. An even
+ * viewBox would put the initials half a pixel off centre, and at 16px that
+ * half pixel is the whole difference between crisp and smeared.
+ */
+export function renderFavicon() {
+  const initials = NAME_LINES.map((word) => word[0]).join('');
+  const pad = 2;
+  const size = textWidth(initials, 1) + 2 * pad;
+  const y = (size - GLYPH_H) / 2;
+
+  const d = layoutText(initials, pad, y, 1)
+    .map((r) => `M${r.x} ${r.y}h${r.w}v${r.h}h-${r.w}z`)
+    .join('');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
+<rect width="${size}" height="${size}" fill="${COLOR.lime}"/>
+<path d="${d}" fill="${COLOR.surface}"/>
+</svg>
+`;
 }
 
 /* ---- Rasterisation ------------------------------------------------------ */
@@ -549,9 +450,9 @@ export function renderArticleCard({ title }) {
 /**
  * SVG string to PNG buffer.
  *
- * Indexed PNG: a card is a couple of dozen flat colours with no gradients and
- * no curves, so a palette costs nothing visually and roughly quarters the
- * file. A share image is fetched by a crawler on a timeout; small is a feature.
+ * Indexed PNG: a card is a handful of flat colours with no gradients and no
+ * curves, so a palette costs nothing visually and roughly quarters the file. A
+ * share image is fetched by a crawler on a timeout; small is a feature.
  */
 export async function rasterise(svg) {
   return sharp(Buffer.from(svg)).png({ palette: true, effort: 10 }).toBuffer();
