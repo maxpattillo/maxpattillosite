@@ -51,7 +51,8 @@ const { current } = Astro.props;
 <style is:global>
   .proto-switcher {
     position: fixed;
-    bottom: 16px;
+    /* Clear of Astro's dev toolbar, which also docks bottom-centre. */
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
