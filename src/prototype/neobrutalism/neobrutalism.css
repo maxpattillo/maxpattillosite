@@ -335,7 +335,7 @@ html[data-variant='A'] .a-footer-copy {
 html[data-variant='B'] .b-shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 64rem) {
@@ -484,6 +484,8 @@ html[data-variant='B'] .b-rail-foot {
 }
 
 html[data-variant='B'] .b-main {
+  min-width: 0;
+  overflow-x: clip; /* the tilted marquee pokes out by a pixel */
   padding-bottom: 6rem;
 }
 
@@ -694,6 +696,7 @@ html[data-variant='C'] .c-block--link {
   justify-content: flex-end;
   gap: 0.25rem;
   min-height: 8rem;
+  padding-top: 3.5rem; /* clear the arrow badge on narrow tiles */
   color: var(--color-ink);
   text-decoration: none;
   transition:
