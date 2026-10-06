@@ -1,0 +1,81 @@
+---
+/**
+ * PROTOTYPE — floating variant switcher. Rendered only when getVariant()
+ * returned a key, which never happens in a build.
+ *
+ * Deliberately styled as OS-ish chrome (rounded, system font, translucent) so
+ * it cannot be mistaken for part of the neobrutalist design under review.
+ */
+import { VARIANTS, VARIANT_KEYS, type VariantKey } from './variants';
+
+interface Props {
+  current: VariantKey;
+}
+
+const { current } = Astro.props;
+---
+
+<div class="proto-switcher" role="toolbar" aria-label="Prototype variant switcher">
+  <button type="button" data-step="-1" aria-label="Previous variant">←</button>
+  <span><strong>{current}</strong> ({VARIANTS[current]})</span>
+  <button type="button" data-step="1" aria-label="Next variant">→</button>
+</div>
+
+<script is:inline define:vars={{ keys: VARIANT_KEYS, current }}>
+  const go = (step) => {
+    const i = keys.indexOf(current);
+    const next = keys[(i + step + keys.length) % keys.length];
+    const url = new URL(location.href);
+    url.searchParams.set('variant', next);
+    location.replace(url);
+  };
+  document.querySelectorAll('.proto-switcher button').forEach((b) =>
+    b.addEventListener('click', () => go(Number(b.dataset.step))),
+  );
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t.closest?.('input, textarea, [contenteditable]')) return;
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(1);
+  });
+  // Carry the variant across internal navigation so the whole site can be walked.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href^="/"]');
+    if (!a || a.getAttribute('href').endsWith('.xml')) return;
+    const url = new URL(a.href);
+    url.searchParams.set('variant', current);
+    a.href = url.pathname + url.search + url.hash;
+  });
+</script>
+
+<style is:global>
+  .proto-switcher {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.92);
+    color: #111;
+    font: 13px/1 -apple-system, system-ui, sans-serif;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  .proto-switcher button {
+    all: unset;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #111;
+    color: #fff;
+  }
+</style>

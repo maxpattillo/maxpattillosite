@@ -1,0 +1,70 @@
+---
+/**
+ * PROTOTYPE — Variant D, "Index ledger".
+ * A full-bleed lime band for the header, content as numbered full-width rows
+ * (see Hero), and a footer laid out as a ledger table.
+ */
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import { footerNav, primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { SITE_NAME } from '../../data/site';
+import { isActivePath } from '../../utils/urls';
+import type { BreadcrumbItem } from '../../utils/schema';
+
+interface Props {
+  crumbs: BreadcrumbItem[];
+  hasBreadcrumb: boolean;
+  measure: string;
+}
+const { crumbs, hasBreadcrumb, measure } = Astro.props;
+const current = Astro.url.pathname;
+const year = new Date().getFullYear();
+---
+
+<header class="d-band">
+  <div class="d-band-inner">
+    <a href="/" class="d-logo">{SITE_NAME}</a>
+    <nav aria-label="Primary">
+      <ul class="d-nav">
+        {
+          primaryNav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={isActivePath(item.href, current) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class={`flex-1 ${measure}`}>
+  {hasBreadcrumb && <Breadcrumbs items={crumbs} />}
+  <slot />
+</main>
+
+<footer class="d-footer">
+  <table class="d-ledger">
+    <caption class="sr-only">Site details</caption>
+    <tbody>
+      <tr><th scope="row">Owner</th><td>{person.name}</td></tr>
+      {
+        person.socialProfiles.map((p) => (
+          <tr>
+            <th scope="row">{p.label}</th>
+            <td><a href={p.url} rel="me noopener">{new URL(p.url).host + new URL(p.url).pathname}</a></td>
+          </tr>
+        ))
+      }
+      <tr><th scope="row">Feed</th><td><a href="/rss.xml">/rss.xml</a></td></tr>
+      {
+        footerNav.map((item) => (
+          <tr><th scope="row">{item.label}</th><td><a href={item.href}>{item.href}</a></td></tr>
+        ))
+      }
+      <tr><th scope="row">Year</th><td>{year}</td></tr>
+    </tbody>
+  </table>
+</footer>

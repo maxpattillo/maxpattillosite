@@ -1,0 +1,155 @@
+---
+/**
+ * PROTOTYPE — the page header each variant draws in place of PageLayout's.
+ * `display` is the homepage register; everything else is `reading`.
+ * Still renders the page's single <h1>, so the heading contract holds.
+ */
+import { footerNav, primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import type { VariantKey } from './variants';
+
+interface Props {
+  variant: VariantKey;
+  heading: string;
+  lede?: string;
+  kicker?: string;
+  display: boolean;
+}
+const { variant, heading, lede, kicker, display } = Astro.props;
+
+// Every real destination the homepage can honestly offer.
+const destinations = [
+  ...primaryNav.map((n) => ({ label: n.label, href: n.href, note: n.description ?? '', ext: false })),
+  ...footerNav.map((n) => ({ label: n.label, href: n.href, note: 'How this site is built', ext: false })),
+  ...person.socialProfiles.map((p) => ({ label: p.label, href: p.url, note: 'Code', ext: true })),
+  { label: 'RSS', href: '/rss.xml', note: 'Get new Articles', ext: false },
+];
+const rel = (ext: boolean) => (ext ? 'me noopener' : undefined);
+---
+
+{
+  variant === 'A' &&
+    (display ? (
+      <header class="a-hero">
+        <div class="nb-box nb-box--accent a-hero-card">
+          <p class="a-hero-kicker">{lede}</p>
+          <h1 class="a-hero-name">{heading}</h1>
+          <ul class="a-hero-actions">
+            {destinations.slice(0, 2).map((d, i) => (
+              <li>
+                <a class:list={['nb-btn', i > 0 && 'nb-btn--ghost']} href={d.href}>
+                  {d.label} →
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <ul class="a-stickers">
+          {destinations.map((d, i) => (
+            <li style={`--tilt: ${[-3, 2, -1.5, 3][i % 4]}deg`}>
+              <a class="nb-box a-sticker" href={d.href} rel={rel(d.ext)}>
+                <span class="a-sticker-label">{d.label}{d.ext ? ' ↗' : ''}</span>
+                <span class="a-sticker-note">{d.note}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </header>
+    ) : (
+      <header class="a-page-head">
+        {kicker && <p class="kicker">{kicker}</p>}
+        <h1 class="a-page-title">
+          <span>{heading}</span>
+        </h1>
+        {lede && <p class="a-page-lede">{lede}</p>}
+      </header>
+    ))
+}
+
+{
+  variant === 'B' &&
+    (display ? (
+      <header class="b-hero">
+        <h1 class="b-hero-name">{heading}</h1>
+        <div class="b-marquee" aria-hidden="true">
+          <div class="b-marquee-track">
+            {Array.from({ length: 8 }, () => (
+              <span>{lede} ✶ {person.name} ✶</span>
+            ))}
+          </div>
+        </div>
+        <p class="sr-only">{lede}</p>
+        <div class="b-hero-grid">
+          {destinations.map((d) => (
+            <a class="b-hero-link" href={d.href} rel={rel(d.ext)}>
+              <span>{d.label}</span>
+              <span aria-hidden="true">{d.ext ? '↗' : '→'}</span>
+            </a>
+          ))}
+        </div>
+      </header>
+    ) : (
+      <header class="b-page-head">
+        {kicker && <p class="kicker">{kicker}</p>}
+        <h1 class="b-page-title">{heading}</h1>
+        {lede && <p class="b-page-lede">{lede}</p>}
+      </header>
+    ))
+}
+
+{
+  variant === 'C' &&
+    (display ? (
+      <header class="c-bento">
+        <div class="c-block c-block--name">
+          <h1>{heading}</h1>
+        </div>
+        <div class="c-block c-block--lime">
+          <p>{lede}</p>
+        </div>
+        {destinations.map((d, i) => (
+          <a class:list={['c-block c-block--link', `c-tile-${i}`]} href={d.href} rel={rel(d.ext)}>
+            <span class="c-tile-label">{d.label}</span>
+            <span class="c-tile-note">{d.note}</span>
+            <span class="c-tile-arrow" aria-hidden="true">{d.ext ? '↗' : '→'}</span>
+          </a>
+        ))}
+      </header>
+    ) : (
+      <header class="c-page-head">
+        {kicker && <p class="kicker">{kicker}</p>}
+        <h1 class="nb-box c-page-title">{heading}</h1>
+        {lede && <p class="c-page-lede">{lede}</p>}
+      </header>
+    ))
+}
+
+{
+  variant === 'D' &&
+    (display ? (
+      <header class="d-hero">
+        <div class="d-hero-top">
+          <h1 class="d-hero-name">{heading}</h1>
+          <p class="d-hero-lede">{lede}</p>
+        </div>
+        <ol class="d-rows">
+          {destinations.map((d, i) => (
+            <li>
+              <a href={d.href} rel={rel(d.ext)}>
+                <span class="d-row-num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="d-row-label">{d.label}</span>
+                <span class="d-row-note">{d.note}</span>
+                <span class="d-row-arrow" aria-hidden="true">{d.ext ? '↗' : '→'}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </header>
+    ) : (
+      <header class="d-page-head">
+        <p class="kicker">{kicker ?? 'Section'}</p>
+        <h1 class="d-page-title">{heading}</h1>
+        {lede && <p class="d-page-lede">{lede}</p>}
+      </header>
+    ))
+}

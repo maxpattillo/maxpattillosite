@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { contentEditor } from './integrations/content-editor';
 import { mediaLibrary } from './integrations/media-library';
 import { seoManifest } from './integrations/seo-manifest';
+import { prototypeVariant } from './src/prototype/neobrutalism/variant-integration';
 import { SITE_URL, isIndexable } from './src/data/site';
 
 /**
@@ -148,6 +149,9 @@ export default defineConfig({
      * and imports into src/assets/media/, and hands Markdown to the editor.
      */
     mediaLibrary(),
+
+    // PROTOTYPE — `?variant=` bridge. astro:server:setup never runs in a build.
+    prototypeVariant(),
   ],
 
   vite: {

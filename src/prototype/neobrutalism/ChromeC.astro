@@ -1,0 +1,64 @@
+---
+/**
+ * PROTOTYPE — Variant C, "Bento poster".
+ * The homepage IS the navigation: a bento grid of blocks (see Hero). Inner
+ * pages get a joined segmented-tab toolbar instead of a header bar, and the
+ * footer is a grid of bordered cells.
+ */
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import { footerNav, primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { SITE_NAME } from '../../data/site';
+import { isActivePath } from '../../utils/urls';
+import type { BreadcrumbItem } from '../../utils/schema';
+
+interface Props {
+  crumbs: BreadcrumbItem[];
+  hasBreadcrumb: boolean;
+  measure: string;
+}
+const { crumbs, hasBreadcrumb, measure } = Astro.props;
+const current = Astro.url.pathname;
+const isHome = current === '/';
+const year = new Date().getFullYear();
+const tabs = [{ label: 'Home', href: '/' }, ...primaryNav, ...footerNav];
+---
+
+{
+  !isHome && (
+    <header class="c-header">
+      <a href="/" class="c-mark" aria-label={`${SITE_NAME}, home`}>
+        MP
+      </a>
+      <nav aria-label="Primary">
+        <ul class="c-tabs">
+          {tabs.map((item) => (
+            <li>
+              <a href={item.href} aria-current={isActivePath(item.href, current) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+  )
+}
+
+<main id="main" class={`flex-1 ${isHome ? 'c-home-main' : measure}`}>
+  {hasBreadcrumb && <Breadcrumbs items={crumbs} />}
+  <slot />
+</main>
+
+<footer class="c-footer">
+  <div class="c-cell">&copy; {year} {person.name}</div>
+  {
+    person.socialProfiles.map((p) => (
+      <a class="c-cell" href={p.url} rel="me noopener">
+        {p.label} ↗
+      </a>
+    ))
+  }
+  <a class="c-cell" href="/rss.xml">RSS</a>
+  {footerNav.map((item) => <a class="c-cell" href={item.href}>{item.label}</a>)}
+</footer>

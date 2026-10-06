@@ -1,0 +1,68 @@
+---
+/**
+ * PROTOTYPE — Variant A, "Sticker board".
+ * Floating bordered nav bar inset from the edges; content sits in chunky
+ * offset-shadow cards; footer is a solid lime slab.
+ */
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import { footerNav, primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { SITE_NAME } from '../../data/site';
+import { isActivePath } from '../../utils/urls';
+import type { BreadcrumbItem } from '../../utils/schema';
+
+interface Props {
+  crumbs: BreadcrumbItem[];
+  hasBreadcrumb: boolean;
+  measure: string;
+}
+const { crumbs, hasBreadcrumb, measure } = Astro.props;
+const current = Astro.url.pathname;
+const year = new Date().getFullYear();
+---
+
+<header class="a-header">
+  <div class="a-bar nb-box">
+    <a href="/" class="a-logo">{SITE_NAME}</a>
+    <nav aria-label="Primary">
+      <ul class="a-nav">
+        {
+          primaryNav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="nb-btn nb-btn--ghost"
+                aria-current={isActivePath(item.href, current) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class={`flex-1 ${measure}`}>
+  {hasBreadcrumb && <Breadcrumbs items={crumbs} />}
+  <slot />
+</main>
+
+<footer class="a-footer">
+  <div class="a-footer-inner">
+    <p class="a-footer-name">{person.name}</p>
+    <ul class="a-footer-links">
+      {footerNav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      {
+        person.socialProfiles.map((p) => (
+          <li>
+            <a href={p.url} rel="me noopener">{p.label} ↗</a>
+          </li>
+        ))
+      }
+      <li><a href="/rss.xml">RSS</a></li>
+    </ul>
+    <p class="a-footer-copy">&copy; {year}</p>
+  </div>
+</footer>

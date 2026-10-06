@@ -12,6 +12,10 @@
  */
 import BaseLayout from './BaseLayout.astro';
 import type { HeadedLayoutProps } from './types';
+// PROTOTYPE — neobrutalism variants draw their own page header.
+import Hero from '../prototype/neobrutalism/Hero.astro';
+import { getVariant } from '../prototype/neobrutalism/variants';
+const variant = getVariant(Astro.url);
 
 type Props = HeadedLayoutProps;
 
@@ -52,6 +56,11 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
 <BaseLayout {...base}>
   <slot name="head" slot="head" />
 
+  {variant ? (
+    <div class={headerMeasure}>
+      <Hero variant={variant} heading={heading} lede={lede} kicker={kicker} display={display} />
+    </div>
+  ) : (
   <header class:list={[display ? 'mb-12' : 'mb-10', headerMeasure]}>
     {
       display ? (
@@ -95,6 +104,7 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
       )
     }
   </header>
+  )}
 
   {
     hasSidebar ? (

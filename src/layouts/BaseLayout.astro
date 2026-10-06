@@ -37,6 +37,17 @@ import {
 } from '../utils/schema';
 import type { BaseLayoutProps } from './types';
 
+// PROTOTYPE — neobrutalism site shells. Dev only; null in a build.
+import '../prototype/neobrutalism/neobrutalism.css';
+import { getVariant } from '../prototype/neobrutalism/variants';
+import Switcher from '../prototype/neobrutalism/Switcher.astro';
+import ChromeA from '../prototype/neobrutalism/ChromeA.astro';
+import ChromeB from '../prototype/neobrutalism/ChromeB.astro';
+import ChromeC from '../prototype/neobrutalism/ChromeC.astro';
+import ChromeD from '../prototype/neobrutalism/ChromeD.astro';
+const variant = getVariant(Astro.url);
+const Chrome = variant && { A: ChromeA, B: ChromeB, C: ChromeC, D: ChromeD }[variant];
+
 /** See src/layouts/types.ts -- shared so specific layouts can extend them. */
 type Props = BaseLayoutProps;
 
@@ -106,7 +117,7 @@ const measure =
 ---
 
 <!doctype html>
-<html lang={DEFAULT_LANG}>
+<html lang={DEFAULT_LANG} data-variant={variant ?? undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -160,31 +171,61 @@ const measure =
 
     {/* Escape hatch for genuinely page-specific head content. Never metadata. */}
     <slot name="head" />
+
+    {
+      variant && (
+        <Fragment>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+          />
+        </Fragment>
+      )
+    }
   </head>
 
   <body class="flex min-h-screen flex-col">
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <Header />
+    {
+      Chrome && variant ? (
+        <Fragment>
+          <Chrome
+            crumbs={crumbs}
+            hasBreadcrumb={hasBreadcrumb}
+            measure={Astro.url.pathname === '/' ? measure.replace('max-w-content', 'max-w-wide') : measure}
+          >
+            <slot />
+          </Chrome>
+          <Switcher current={variant} />
+        </Fragment>
+      ) : (
+        <Fragment>
+          <Header />
 
-    <main id="main" class={`flex-1 ${measure}`}>
-      {
-        /*
-         * In 'full' the main element has no gutter, so the trail has to carry
-         * its own or it sits flush against the viewport edge.
-         */
-        hasBreadcrumb &&
-          (width === 'full' ? (
-            <div class="mx-auto w-full max-w-wide px-gutter pt-8">
-              <Breadcrumbs items={crumbs} />
-            </div>
-          ) : (
-            <Breadcrumbs items={crumbs} />
-          ))
-      }
-      <slot />
-    </main>
+          <main id="main" class={`flex-1 ${measure}`}>
+            {
+              /*
+               * In 'full' the main element has no gutter, so the trail has to carry
+               * its own or it sits flush against the viewport edge.
+               */
+              hasBreadcrumb &&
+                (width === 'full' ? (
+                  <div class="mx-auto w-full max-w-wide px-gutter pt-8">
+                    <Breadcrumbs items={crumbs} />
+                  </div>
+                ) : (
+                  <Breadcrumbs items={crumbs} />
+                ))
+            }
+            <slot />
+          </main>
 
-    <Footer />
+          <Footer />
+        </Fragment>
+      )
+    }
   </body>
 </html>

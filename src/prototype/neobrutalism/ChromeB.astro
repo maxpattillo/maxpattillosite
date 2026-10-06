@@ -1,0 +1,64 @@
+---
+/**
+ * PROTOTYPE — Variant B, "Sidebar rail".
+ * A thick-bordered rail down the left owns identity, nav and footer; the
+ * content column has no header at all. On a phone the rail collapses to a
+ * one-line top bar.
+ */
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import { footerNav, primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { isActivePath } from '../../utils/urls';
+import type { BreadcrumbItem } from '../../utils/schema';
+
+interface Props {
+  crumbs: BreadcrumbItem[];
+  hasBreadcrumb: boolean;
+  measure: string;
+}
+const { crumbs, hasBreadcrumb, measure } = Astro.props;
+const current = Astro.url.pathname;
+const year = new Date().getFullYear();
+const links = [{ label: 'Home', href: '/' }, ...primaryNav, ...footerNav];
+---
+
+<div class="b-shell">
+  <header class="b-rail">
+    <a href="/" class="b-name">
+      <span>{person.givenName}</span>
+      <span>{person.familyName}</span>
+    </a>
+    <nav aria-label="Primary">
+      <ol class="b-nav">
+        {
+          links.map((item, i) => (
+            <li>
+              <a href={item.href} aria-current={isActivePath(item.href, current) ? 'page' : undefined}>
+                <span class="b-num">{String(i + 1).padStart(2, '0')}</span>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+    <footer class="b-rail-foot">
+      <ul>
+        {
+          person.socialProfiles.map((p) => (
+            <li>
+              <a href={p.url} rel="me noopener">{p.label} ↗</a>
+            </li>
+          ))
+        }
+        <li><a href="/rss.xml">RSS</a></li>
+      </ul>
+      <p>&copy; {year}</p>
+    </footer>
+  </header>
+
+  <main id="main" class={`b-main ${measure}`}>
+    {hasBreadcrumb && <Breadcrumbs items={crumbs} />}
+    <slot />
+  </main>
+</div>
