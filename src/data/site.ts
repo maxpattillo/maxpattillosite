@@ -50,7 +50,7 @@ export const DEFAULT_OG_IMAGE = '/og/default.png';
  * The bare name would merely repeat the title next to it. If the card in
  * `scripts/og-card.mjs` is redrawn, this has to be rewritten with it.
  */
-export const DEFAULT_OG_IMAGE_ALT = `${SITE_NAME} — the name in white pixel type, inside a thick-bordered block with an acid-lime offset shadow, on a near-black card.`;
+export const DEFAULT_OG_IMAGE_ALT = `${SITE_NAME} — the name in white pixel type, inside a thick-bordered block with an smoke-grey offset shadow, on a near-black card.`;
 
 /**
  * Share-card dimensions.
@@ -81,7 +81,7 @@ export const articleOgImage = (slug: string) => `/og/writing/${slug}.png`;
 
 /** Alt text for an article's share card, given its title. */
 export const articleOgImageAlt = (title: string) =>
-  `"${title}" — an article by ${SITE_NAME}, the title in white pixel type inside a thick-bordered block with an acid-lime offset shadow, on a near-black card.`;
+  `"${title}" — an article by ${SITE_NAME}, the title in white pixel type inside a thick-bordered block with an smoke-grey offset shadow, on a near-black card.`;
 
 export const DEFAULT_LOCALE = 'en_US';
 

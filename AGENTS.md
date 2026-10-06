@@ -15,8 +15,8 @@ Most of what follows is **mechanically enforced** — see [What is actually
 enforced](#what-is-actually-enforced). Rules that are not enforced are marked
 _(judgement)_ and need a human.
 
-Visual decisions live in [DESIGN.md](./DESIGN.md). For now it records the
-agreed direction only; the full system is pending a prototype.
+Visual decisions live in [DESIGN.md](./DESIGN.md): the tokens, the type, the
+components and the one permitted motion.
 
 ---
 
@@ -211,11 +211,17 @@ resources.
 
 ### Web fonts
 
-No web font is loaded; the placeholder styling uses system stacks. The agreed
-direction names its families, and the decision to load them — subsetting,
-preloading, fallbacks, and what it costs against the Lighthouse budget —
-belongs to the pending design work. See [DESIGN.md](./DESIGN.md). Until that
-lands, adding a web font is not covered by any decision here.
+Two families, both self-hosted: Space Grotesk and JetBrains Mono, as
+`@fontsource-variable` packages imported in `BaseLayout`. The files are served
+from our own origin, so the "only third party is the CloseBot widget" rule
+holds. Never load fonts from a CDN.
+
+Each package declares per-script `unicode-range` subsets, so an English page
+downloads only the latin files, one variable file per family. `font-display:
+swap` comes from the packages, and the fallbacks are the system stacks in the
+`--font-sans` and `--font-mono` tokens. Nothing is preloaded yet. If the
+Lighthouse budget slips on font swap, preloading the two latin files is the
+first thing to try. A third family needs a decision of its own.
 
 ## Accessibility
 

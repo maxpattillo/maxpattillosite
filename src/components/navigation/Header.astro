@@ -24,51 +24,54 @@ const current = Astro.url.pathname;
 ---
 
 {/*
-  The hairline is full-strength ink, not a polite grey. See DESIGN.md -- a 1px
-  full-contrast rule is the most characteristic mark in the system, and
-  softening borders is the fastest route back to a generic site.
-*/}
-{/*
+  A panel floating inside the gutter rather than a full-width bar: the mark
+  and the site name, then the nav items as buttons. See DESIGN.md.
+
   Sticky so navigation stays reachable through a long article you scroll for
-  several screens.
+  several screens. The strip above the panel is transparent on purpose; the
+  html scroll-padding in global.css clears both.
 */}
-<header class="sticky top-0 z-50 border-b border-line bg-surface">
-  <div
-    class="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-4 px-gutter py-3"
-  >
-    <a
-      href="/"
-      class="font-mono text-kicker font-normal tracking-[0.08em] text-ink uppercase no-underline"
-    >
+<header class="sticky top-0 z-50 px-gutter pt-4">
+  <div class="panel mx-auto flex max-w-wide items-center justify-between gap-4 p-2">
+    {/*
+      The mark is the favicon, drawn inline so it takes its colours from the
+      tokens rather than from a copy of them. Decorative: the name beside it is
+      the link's accessible name. Same geometry as renderFavicon in
+      scripts/og-card.mjs.
+    */}
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-ink no-underline">
+      <svg
+        class="size-9 shrink-0"
+        viewBox="0 0 16 16"
+        shape-rendering="crispEdges"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect x="5" y="5" width="11" height="11" class="fill-accent" />
+        <rect width="11" height="11" class="fill-ink" />
+        <rect x="2" y="2" width="7" height="7" class="fill-surface" />
+      </svg>
       {SITE_NAME}
     </a>
 
     <nav aria-label="Primary">
-      <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <ul class="flex items-center gap-3">
         {
-          primaryNav.map((item) => {
-            const active = isActivePath(item.href, current);
-            return (
-              <li>
-                <a
-                  href={item.href}
-                  aria-current={active ? 'page' : undefined}
-                  class:list={[
-                    'font-mono text-kicker tracking-[0.08em] uppercase no-underline hover:text-accent-hover',
-                    /*
-                     * The current page is marked by an underline as well as by
-                     * colour. Colour is never the only carrier of meaning.
-                     */
-                    active
-                      ? 'text-ink underline decoration-accent decoration-2 underline-offset-4'
-                      : 'text-ink-muted',
-                  ]}
-                >
-                  {item.label}
-                </a>
-              </li>
-            );
-          })
+          primaryNav.map((item) => (
+            <li>
+              {/*
+                The current page is pressed and filled, not merely recoloured.
+                Colour is never the only carrier of meaning.
+              */}
+              <a
+                href={item.href}
+                aria-current={isActivePath(item.href, current) ? 'page' : undefined}
+                class="button button-ghost"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
         }
       </ul>
     </nav>

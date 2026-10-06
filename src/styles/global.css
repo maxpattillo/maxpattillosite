@@ -9,50 +9,45 @@
 
 /**
  * Design tokens. Components reference semantic tokens and never literal
- * values, so the real palette can replace this one without touching a
- * component.
+ * values. See DESIGN.md for what each one is for.
  *
  * Tailwind v4 defines theme values in CSS, not in a JS config file. The
  * @astrojs/tailwind integration is retired -- Tailwind is wired in through
  * the @tailwindcss/vite plugin in astro.config.ts.
  *
- * A NEUTRAL PLACEHOLDER. The site is dark-only, and this is the plainest
- * palette that is: grey on near-black, no hue at all. The real visual
- * direction is designed separately and lands on top of it -- see DESIGN.md.
- * Until then, adding character here is premature.
+ * ONE DEFINITION PER TOKEN. The site is dark-only: there is no light theme,
+ * no `[data-theme]` override and no `prefers-color-scheme` branch.
  *
- * ONE DEFINITION PER TOKEN. There is no light theme, no `[data-theme]`
- * override and no `prefers-color-scheme` branch, so there is nothing to keep
- * in step with anything else.
- *
- * System fonts, also as a placeholder. No web font is loaded.
+ * Fonts are self-hosted from @fontsource-variable, imported in BaseLayout.
+ * The family names below are the ones those packages declare.
  */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  --font-sans: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-surface: oklch(0.16 0 0);
-  --color-surface-raised: oklch(0.22 0 0); /* code, the chat widget */
-  --color-ink: oklch(0.93 0 0);
-  --color-ink-muted: oklch(0.7 0 0); /* secondary text, never body copy */
-  --color-line: oklch(0.93 0 0); /* hairlines are full-strength ink */
-  --color-rule: oklch(0.34 0 0); /* soft rule, prose only */
-  --color-accent: oklch(0.86 0 0);
-  --color-accent-hover: oklch(1 0 0);
+  --color-surface: oklch(0.15 0 0);
+  --color-surface-raised: oklch(0.21 0 0); /* code, the chat widget */
+  --color-ink: oklch(0.97 0 0);
+  --color-ink-muted: oklch(0.78 0 0); /* secondary text, never body copy */
+  --color-line: oklch(0.97 0 0); /* borders and shadows are full-strength ink */
+  --color-rule: oklch(0.42 0 0); /* soft rule, prose only */
+  --color-accent: oklch(0.66 0.01 250); /* smoke */
+  --color-accent-hover: oklch(0.74 0.01 250);
+  --color-on-accent: oklch(0.13 0 0); /* text set on an accent fill */
 
-  --text-display: clamp(3rem, 12vw, 7.5rem);
-  --text-display--line-height: 0.82;
-  --text-display--letter-spacing: -0.03em;
-  --text-display--font-weight: 600;
+  --text-display: clamp(3rem, 11vw, 7rem);
+  --text-display--line-height: 0.9;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 700;
 
-  --text-title: 2.25rem;
-  --text-title--line-height: 1.05;
-  --text-title--letter-spacing: -0.01em;
-  --text-title--font-weight: 600;
+  --text-title: clamp(2.25rem, 6vw, 3.5rem);
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.03em;
+  --text-title--font-weight: 700;
 
   --text-heading: 1.5rem;
   --text-heading--line-height: 1.3;
-  --text-heading--font-weight: 600;
+  --text-heading--font-weight: 700;
 
   --text-body: 1rem;
   --text-body--line-height: 1.6;
@@ -72,6 +67,16 @@
   --spacing-gutter: 1.5rem;
   --container-content: 38rem;
   --container-wide: 72rem;
+}
+
+/*
+ * The construction. Not Tailwind theme values because nothing needs a utility
+ * for them; the components below are their only readers.
+ */
+:root {
+  --border-heavy: 3px;
+  --shadow-offset: 6px;
+  --press-duration: 100ms;
 }
 
 /*
@@ -122,7 +127,7 @@
      * The header is sticky, so an anchored target would otherwise land
      * underneath it. Keeps #main and any in-page link clear of the chrome.
      */
-    scroll-padding-block-start: 4rem;
+    scroll-padding-block-start: 6.5rem;
   }
 
   /*
@@ -187,7 +192,8 @@
 
   /*
    * Motion is nearly absent, and that is a decision. Transitions are permitted
-   * on colour only -- never transforms, never opacity fades of content.
+   * on colour, plus the one press below (`.button`, `.sticker`) -- never
+   * opacity fades of content. prefers-reduced-motion clamps all of it.
    */
   a,
   button {
@@ -277,6 +283,120 @@
   }
 
   /*
+   * Panel: the basic neobrutalist unit. Thick ink border, hard offset shadow,
+   * never blurred, never rounded. `panel-accent` swaps the shadow to the accent
+   * for the one panel on a page that should lead.
+   */
+  .panel {
+    border: var(--border-heavy) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--color-line);
+  }
+
+  .panel-accent {
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--color-accent);
+  }
+
+  /*
+   * Button: a link styled as a pressable block. Pressing it -- hover, or
+   * being the current page -- moves it onto its own shadow.
+   */
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border: var(--border-heavy) solid var(--color-line);
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 4px 4px 0 0 var(--color-line);
+    transition:
+      transform var(--press-duration) ease-out,
+      box-shadow var(--press-duration) ease-out,
+      background-color var(--press-duration) linear;
+  }
+
+  .button-ghost {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .button:hover,
+  .button[aria-current='page'] {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 0 var(--color-line);
+  }
+
+  .button-ghost[aria-current='page'] {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  /* Tag: a small accent-filled mono label. A page's standfirst. */
+  .tag {
+    display: inline-block;
+    border: var(--border-heavy) solid var(--color-line);
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    padding: 0.2rem 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  /*
+   * Highlight: an accent band behind a reading-register <h1>. `clone` repeats
+   * the padding and shadow on every line when the title wraps.
+   */
+  .highlight {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    padding: 0 0.3em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    box-shadow: 5px 5px 0 0 var(--color-line);
+  }
+
+  /*
+   * Sticker: a navigation tile, slightly askew. The tilt cycles by position so
+   * no page has to pass an angle in, and a press straightens nothing -- it
+   * just drops the tile onto its shadow, like a button.
+   */
+  .sticker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
+    padding: 1.25rem;
+    color: var(--color-ink);
+    text-decoration: none;
+    transition:
+      transform var(--press-duration) ease-out,
+      box-shadow var(--press-duration) ease-out,
+      background-color var(--press-duration) linear;
+  }
+
+  .sticker:hover {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    transform: translate(var(--shadow-offset), var(--shadow-offset));
+    box-shadow: none;
+  }
+
+  .sticker-grid > li:nth-child(4n + 1) { rotate: -3deg; }
+  .sticker-grid > li:nth-child(4n + 2) { rotate: 2deg; }
+  .sticker-grid > li:nth-child(4n + 3) { rotate: -1.5deg; }
+  .sticker-grid > li:nth-child(4n + 4) { rotate: 3deg; }
+
+  /*
    * Leader line: the dotted rule that connects a label to its value, as in a
    * table of contents. Rendered as an explicit aria-hidden span inside a flex
    * row rather than a pseudo-element, because the filler has to sit BETWEEN two
@@ -337,13 +457,14 @@
   }
 
   .prose a {
-    color: var(--color-accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    color: var(--color-ink);
+    text-decoration: underline 3px var(--color-accent);
+    text-underline-offset: 3px;
   }
 
   .prose a:hover {
-    color: var(--color-accent-hover);
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
   }
 
   .prose ul,
@@ -363,14 +484,13 @@
     margin-block-start: 0.375em;
   }
 
-  /*
-   * The soft rule, not the ink hairline. A full-contrast bar down the side of a
-   * pull quote fights the paragraph it is quoting.
-   */
+  /* A bordered block with an accent spine. */
   .prose blockquote {
-    border-inline-start: 3px solid var(--color-rule);
-    padding-inline-start: 1rem;
-    color: var(--color-ink-muted);
+    border: var(--border-heavy) solid var(--color-line);
+    border-inline-start: 12px solid var(--color-accent);
+    padding: 1rem 1.25rem;
+    color: var(--color-ink);
+    font-weight: 500;
   }
 
   .prose code {
@@ -380,7 +500,7 @@
 
   .prose :not(pre) > code {
     background-color: var(--color-surface-raised);
-    border: 1px solid var(--color-rule);
+    border: 2px solid var(--color-line);
     border-radius: 0;
     padding: 0.0625em 0.25em;
   }
@@ -405,8 +525,10 @@
    * reads as two commands, and that is worth a scrollbar.
    */
   .prose pre {
-    border: 1px solid var(--color-line);
+    border: var(--border-heavy) solid var(--color-line);
     border-radius: 0;
+    background-color: var(--color-surface-raised);
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--color-accent);
     overflow-x: auto;
     padding: 1rem;
     white-space: pre-wrap;
@@ -427,12 +549,14 @@
 
   .prose th,
   .prose td {
-    border: 1px solid var(--color-line);
+    border: 2px solid var(--color-line);
     padding: 0.5rem 0.75rem;
     text-align: start;
   }
 
   .prose th {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
     font-family: var(--font-mono);
     font-size: var(--text-kicker);
     letter-spacing: 0.08em;

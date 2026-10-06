@@ -3,9 +3,9 @@ See [AGENTS.md](./AGENTS.md) for the engineering rules for this project.
 They are not optional, and most of them fail the build rather than the review.
 Read the "What is actually enforced" table before assuming a rule is advisory.
 
-See [DESIGN.md](./DESIGN.md) for the visual direction. The full system is
-pending a prototype; until then, follow the direction it records rather than
-any default.
+See [DESIGN.md](./DESIGN.md) for the visual system: tokens, type, components,
+and motion. Use its tokens and components rather than any default or literal
+value.
 
 ## Agent skills
 

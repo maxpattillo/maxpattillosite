@@ -57,23 +57,22 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
       display ? (
         <div
           class:list={[
-            'py-10',
+            'panel panel-accent p-[clamp(1.5rem,5vw,3.5rem)]',
             hasAside && 'lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-16',
           ]}
         >
           <div>
-            {kicker && (
-              <p class="kicker mb-6 flex items-baseline">
-                <span>{kicker}</span>
-                <span class="leader-fill" aria-hidden="true" />
-              </p>
-            )}
+            {kicker && <p class="kicker mb-4">{kicker}</p>}
+            {/*
+              In the display register the standfirst comes FIRST, as a tilted
+              tag: it is a greeting, read before the name rather than after.
+            */}
+            {lede && <p class="tag -rotate-2">{lede}</p>}
             {/*
               Leading below 1 is the move, not a bug. See DESIGN.md before
               relaxing it to something comfortable.
             */}
-            <h1 class="text-display text-ink">{heading}</h1>
-            {lede && <p class="mt-8 max-w-content text-lg text-ink-muted">{lede}</p>}
+            <h1 class:list={['text-display text-ink', lede && 'mt-5']}>{heading}</h1>
           </div>
 
           {/*
@@ -89,8 +88,11 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
       ) : (
         <Fragment>
           {kicker && <p class="kicker mb-4">{kicker}</p>}
-          <h1 class="text-title text-ink">{heading}</h1>
-          {lede && <p class="mt-4 text-lg text-ink-muted">{lede}</p>}
+          {/* The span carries the band, so it wraps line by line with the text. */}
+          <h1 class="text-title">
+            <span class="highlight">{heading}</span>
+          </h1>
+          {lede && <p class="mt-6 text-lg text-ink-muted">{lede}</p>}
         </Fragment>
       )
     }
