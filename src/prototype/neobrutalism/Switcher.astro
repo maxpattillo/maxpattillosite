@@ -39,7 +39,7 @@ const { current } = Astro.props;
   // Accent lives in the URL so a pick is shareable and survives reloads.
   const accentKeys = Object.keys(accents);
   let accent = new URL(location.href).searchParams.get('accent');
-  if (!accents[accent]) accent = 'acid';
+  if (!accents[accent]) accent = 'bone';
   const applyAccent = (key) => {
     accent = key;
     const root = document.documentElement.style;

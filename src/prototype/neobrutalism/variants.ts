@@ -28,17 +28,19 @@ export function getVariant(_url: URL): VariantKey | null {
 }
 
 /**
- * Accent candidates, after "A, but the lime is too bright". Applied client-side
- * as a CSS variable via `?accent=`, so switching needs no reload. All are light
- * enough to carry the near-black on-accent text.
+ * Accent candidates, round two: the Owner picked Bone and asked for darker,
+ * more minimal neighbours. All near-neutral (chroma <= 0.05), stepping down in
+ * lightness from Bone. None goes below L 0.62, so the near-black on-accent
+ * text keeps a usable contrast. Applied client-side via `?accent=`.
  */
 export const ACCENTS = {
-  acid: { label: 'Acid lime (current)', value: 'oklch(0.93 0.23 126)' },
-  soft: { label: 'Soft lime', value: 'oklch(0.87 0.17 125)' },
-  chartreuse: { label: 'Muted chartreuse', value: 'oklch(0.82 0.13 118)' },
-  pale: { label: 'Pale lime', value: 'oklch(0.91 0.10 115)' },
-  moss: { label: 'Moss', value: 'oklch(0.74 0.12 125)' },
-  sage: { label: 'Sage', value: 'oklch(0.80 0.07 150)' },
-  amber: { label: 'Amber', value: 'oklch(0.80 0.14 75)' },
   bone: { label: 'Bone', value: 'oklch(0.90 0.03 90)' },
+  parchment: { label: 'Parchment', value: 'oklch(0.85 0.035 85)' },
+  linen: { label: 'Linen', value: 'oklch(0.80 0.025 75)' },
+  stone: { label: 'Stone', value: 'oklch(0.75 0.02 80)' },
+  ash: { label: 'Ash', value: 'oklch(0.70 0.01 90)' },
+  taupe: { label: 'Taupe', value: 'oklch(0.68 0.03 60)' },
+  clay: { label: 'Clay', value: 'oklch(0.66 0.05 45)' },
+  fog: { label: 'Fog (cool)', value: 'oklch(0.78 0.012 240)' },
+  smoke: { label: 'Smoke (cool)', value: 'oklch(0.66 0.01 250)' },
 } as const;
