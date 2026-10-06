@@ -338,7 +338,7 @@
     color: var(--color-on-accent);
   }
 
-  /* Tag: a small accent-filled mono label. The site name, a page's standfirst. */
+  /* Tag: a small accent-filled mono label. A page's standfirst. */
   .tag {
     display: inline-block;
     border: var(--border-heavy) solid var(--color-line);

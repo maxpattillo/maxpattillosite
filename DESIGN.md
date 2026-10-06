@@ -60,12 +60,12 @@ Defined in `global.css`, `@layer components`.
 | `.panel` | Ink border and ink offset shadow. The basic unit |
 | `.panel-accent` | The panel's shadow in the accent. One per page, on the lead panel |
 | `.button`, `.button-ghost` | Mono, uppercase, pressable. Accent-filled, or surface-filled |
-| `.tag` | A small accent-filled mono label: the site name, the homepage greeting |
+| `.tag` | A small accent-filled mono label: the homepage greeting |
 | `.highlight` | The accent band behind a reading-register title |
 | `.sticker`, `.sticker-grid` | Homepage navigation tiles, tilted by position |
 
-The header is a floating panel with the name as a tag and the nav as ghost
-buttons. The footer is the one large accent slab, with dark chips for links.
+The header is a floating panel with the mark beside the name and the nav as
+ghost buttons. The footer is the one large accent slab, with dark chips for links.
 
 ## Motion
 

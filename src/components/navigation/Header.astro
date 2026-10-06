@@ -24,8 +24,8 @@ const current = Astro.url.pathname;
 ---
 
 {/*
-  A panel floating inside the gutter rather than a full-width bar: the site
-  name is an accent tag, the nav items are buttons. See DESIGN.md.
+  A panel floating inside the gutter rather than a full-width bar: the mark
+  and the site name, then the nav items as buttons. See DESIGN.md.
 
   Sticky so navigation stays reachable through a long article you scroll for
   several screens. The strip above the panel is transparent on purpose; the
@@ -33,7 +33,24 @@ const current = Astro.url.pathname;
 */}
 <header class="sticky top-0 z-50 px-gutter pt-4">
   <div class="panel mx-auto flex max-w-wide items-center justify-between gap-4 p-2">
-    <a href="/" class="tag font-sans text-base tracking-normal normal-case">
+    {/*
+      The mark is the favicon, drawn inline so it takes its colours from the
+      tokens rather than from a copy of them. Decorative: the name beside it is
+      the link's accessible name. Same geometry as renderFavicon in
+      scripts/og-card.mjs.
+    */}
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-ink no-underline">
+      <svg
+        class="size-9 shrink-0"
+        viewBox="0 0 16 16"
+        shape-rendering="crispEdges"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect x="5" y="5" width="11" height="11" class="fill-accent" />
+        <rect width="11" height="11" class="fill-ink" />
+        <rect x="2" y="2" width="7" height="7" class="fill-surface" />
+      </svg>
       {SITE_NAME}
     </a>
 
