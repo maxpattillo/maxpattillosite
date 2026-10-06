@@ -38,6 +38,10 @@ All in `src/styles/global.css`. Components reference these, never literals.
 The share card and favicon read `--color-accent`, `--color-ink` and the surfaces
 from the same file (`scripts/og-card.mjs`). After changing them, run `pnpm og`.
 
+The favicon is the **pressed block**: an ink-bordered dark block on a smoke
+offset shadow, with no letters. Picked by prototype on 2026-10-06 over the
+initials, which smear at 16px. The candidates live on `prototype/logo`.
+
 ## Type
 
 - **Space Grotesk** for text and display. **JetBrains Mono** for labels,

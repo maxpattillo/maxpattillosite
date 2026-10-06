@@ -5,7 +5,7 @@
  *
  *   public/og/default.png            the fallback, for every non-article page
  *   public/og/writing/<slug>.png     one per published article
- *   public/favicon.svg               the Owner's initials on the accent
+ *   public/favicon.svg               the pressed block: ink border, smoke shadow
  *
  * IT NEEDS A BUILD FIRST, because the article cards are titled from each
  * page's real `<h1>` in `.seo/manifest.json` -- see og-articles.mjs for why.
