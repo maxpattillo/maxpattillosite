@@ -26,3 +26,19 @@ export function getVariant(_url: URL): VariantKey | null {
   const raw = ((globalThis as { __protoVariant?: string }).__protoVariant ?? 'A').toUpperCase();
   return (VARIANT_KEYS as string[]).includes(raw) ? (raw as VariantKey) : 'A';
 }
+
+/**
+ * Accent candidates, after "A, but the lime is too bright". Applied client-side
+ * as a CSS variable via `?accent=`, so switching needs no reload. All are light
+ * enough to carry the near-black on-accent text.
+ */
+export const ACCENTS = {
+  acid: { label: 'Acid lime (current)', value: 'oklch(0.93 0.23 126)' },
+  soft: { label: 'Soft lime', value: 'oklch(0.87 0.17 125)' },
+  chartreuse: { label: 'Muted chartreuse', value: 'oklch(0.82 0.13 118)' },
+  pale: { label: 'Pale lime', value: 'oklch(0.91 0.10 115)' },
+  moss: { label: 'Moss', value: 'oklch(0.74 0.12 125)' },
+  sage: { label: 'Sage', value: 'oklch(0.80 0.07 150)' },
+  amber: { label: 'Amber', value: 'oklch(0.80 0.14 75)' },
+  bone: { label: 'Bone', value: 'oklch(0.90 0.03 90)' },
+} as const;

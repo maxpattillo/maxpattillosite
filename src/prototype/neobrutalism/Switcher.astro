@@ -6,7 +6,7 @@
  * Deliberately styled as OS-ish chrome (rounded, system font, translucent) so
  * it cannot be mistaken for part of the neobrutalist design under review.
  */
-import { VARIANTS, VARIANT_KEYS, type VariantKey } from './variants';
+import { ACCENTS, VARIANTS, VARIANT_KEYS, type VariantKey } from './variants';
 
 interface Props {
   current: VariantKey;
@@ -19,17 +19,54 @@ const { current } = Astro.props;
   <button type="button" data-step="-1" aria-label="Previous variant">←</button>
   <span><strong>{current}</strong> ({VARIANTS[current]})</span>
   <button type="button" data-step="1" aria-label="Next variant">→</button>
+  <span class="proto-sep" aria-hidden="true"></span>
+  {
+    Object.entries(ACCENTS).map(([key, a]) => (
+      <button
+        type="button"
+        class="proto-swatch"
+        data-accent={key}
+        aria-label={a.label}
+        title={a.label}
+        style={`background: ${a.value}`}
+      />
+    ))
+  }
+  <span class="proto-accent-name"></span>
 </div>
 
-<script is:inline define:vars={{ keys: VARIANT_KEYS, current }}>
+<script is:inline define:vars={{ keys: VARIANT_KEYS, current, accents: ACCENTS }}>
+  // Accent lives in the URL so a pick is shareable and survives reloads.
+  const accentKeys = Object.keys(accents);
+  let accent = new URL(location.href).searchParams.get('accent');
+  if (!accents[accent]) accent = 'acid';
+  const applyAccent = (key) => {
+    accent = key;
+    const root = document.documentElement.style;
+    root.setProperty('--color-accent', accents[key].value);
+    root.setProperty('--color-accent-hover', accents[key].value);
+    document.querySelectorAll('.proto-swatch').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.accent === key)),
+    );
+    document.querySelector('.proto-accent-name').textContent = accents[key].label;
+    const url = new URL(location.href);
+    url.searchParams.set('accent', key);
+    history.replaceState(null, '', url);
+  };
+  applyAccent(accent);
+  document.querySelectorAll('.proto-swatch').forEach((b) =>
+    b.addEventListener('click', () => applyAccent(b.dataset.accent)),
+  );
+
   const go = (step) => {
     const i = keys.indexOf(current);
     const next = keys[(i + step + keys.length) % keys.length];
     const url = new URL(location.href);
     url.searchParams.set('variant', next);
+    url.searchParams.set('accent', accent);
     location.replace(url);
   };
-  document.querySelectorAll('.proto-switcher button').forEach((b) =>
+  document.querySelectorAll('.proto-switcher [data-step]').forEach((b) =>
     b.addEventListener('click', () => go(Number(b.dataset.step))),
   );
   document.addEventListener('keydown', (e) => {
@@ -37,6 +74,12 @@ const { current } = Astro.props;
     if (t.closest?.('input, textarea, [contenteditable]')) return;
     if (e.key === 'ArrowLeft') go(-1);
     if (e.key === 'ArrowRight') go(1);
+    const step = { ArrowUp: -1, ArrowDown: 1 }[e.key];
+    if (step) {
+      e.preventDefault();
+      const i = accentKeys.indexOf(accent);
+      applyAccent(accentKeys[(i + step + accentKeys.length) % accentKeys.length]);
+    }
   });
   // Carry the variant across internal navigation so the whole site can be walked.
   document.addEventListener('click', (e) => {
@@ -44,6 +87,7 @@ const { current } = Astro.props;
     if (!a || a.getAttribute('href').endsWith('.xml')) return;
     const url = new URL(a.href);
     url.searchParams.set('variant', current);
+    url.searchParams.set('accent', accent);
     a.href = url.pathname + url.search + url.hash;
   });
 </script>
@@ -68,7 +112,7 @@ const { current } = Astro.props;
     backdrop-filter: blur(8px);
     white-space: nowrap;
   }
-  .proto-switcher button {
+  .proto-switcher [data-step] {
     all: unset;
     cursor: pointer;
     width: 28px;
@@ -78,5 +122,27 @@ const { current } = Astro.props;
     border-radius: 999px;
     background: #111;
     color: #fff;
+  }
+  .proto-sep {
+    width: 1px;
+    height: 20px;
+    background: rgb(0 0 0 / 0.2);
+  }
+  .proto-swatch {
+    all: unset;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+  }
+  .proto-swatch[aria-pressed='true'] {
+    box-shadow:
+      0 0 0 2px #fff,
+      0 0 0 4px #111;
+  }
+  .proto-accent-name {
+    min-width: 9em;
+    color: #444;
   }
 </style>
