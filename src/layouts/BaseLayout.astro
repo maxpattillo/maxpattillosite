@@ -30,6 +30,8 @@ import SEO from '../components/seo/SEO.astro';
 import Breadcrumbs from '../components/common/Breadcrumbs.astro';
 import Header from '../components/navigation/Header.astro';
 import Footer from '../components/navigation/Footer.astro';
+// PROTOTYPE: logo variants, dev only. Remove with src/prototype/logo/.
+import LogoPrototype from '../prototype/logo/LogoPrototype.astro';
 import { DEFAULT_LANG, SITE_NAME } from '../data/site';
 import { resolveSeo } from '../schemas/seo';
 import { deriveBreadcrumbs } from '../utils/urls';
@@ -192,5 +194,6 @@ const measure =
     </main>
 
     <Footer />
+    {import.meta.env.DEV && <LogoPrototype />}
   </body>
 </html>

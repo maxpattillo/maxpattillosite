@@ -1,0 +1,210 @@
+---
+/**
+ * PROTOTYPE: floating switcher and specimen sheet for the logo marks in
+ * marks.ts. BaseLayout mounts it only under `import.meta.env.DEV`.
+ *
+ * Everything runs client-side: the variant comes from `?variant=`, the real
+ * tab favicon is swapped to that mark, and the mark is set beside the name in
+ * the real header. The specimen shows it at true tab size on dark and light
+ * browser chrome, plus the larger sizes it will also be used at.
+ *
+ * Styled as OS-ish chrome (rounded, system font, white) so it cannot be
+ * mistaken for part of the design under review.
+ */
+import { VARIANTS } from './marks';
+---
+
+<div class="logo-proto-specimen" aria-hidden="true">
+  <p class="logo-proto-title"></p>
+  <p class="logo-proto-note"></p>
+  <div class="logo-proto-tabs">
+    <div class="logo-proto-tab dark"><img width="16" height="16" alt="" /> Max Pattillo</div>
+    <div class="logo-proto-tab light"><img width="16" height="16" alt="" /> Max Pattillo</div>
+  </div>
+  <div class="logo-proto-sizes">
+    <figure><img width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+    <figure><img width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+    <figure><img width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+    <figure class="ios"><img width="120" height="120" alt="" /><figcaption>home screen</figcaption></figure>
+  </div>
+</div>
+
+<div class="logo-proto-switcher" role="toolbar" aria-label="Prototype variant switcher">
+  <button type="button" data-step="-1" aria-label="Previous variant">←</button>
+  <span class="logo-proto-label"></span>
+  <button type="button" data-step="1" aria-label="Next variant">→</button>
+</div>
+
+<script is:inline define:vars={{ variants: VARIANTS }}>
+  const keys = Object.keys(variants);
+  let key = (new URL(location.href).searchParams.get('variant') ?? 'A').toUpperCase();
+  if (!variants[key]) key = 'A';
+
+  const render = () => {
+    const v = variants[key];
+    const src = `data:image/svg+xml,${encodeURIComponent(v.svg)}`;
+
+    // The real tab icon.
+    document.querySelectorAll('link[rel="icon"]').forEach((l) => l.remove());
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = src;
+    document.head.append(link);
+
+    // The real header: the mark sits just before the name tag.
+    const tag = document.querySelector('header a.tag');
+    let mark = document.querySelector('.logo-proto-mark');
+    if (tag && !mark) {
+      mark = document.createElement('img');
+      mark.className = 'logo-proto-mark';
+      mark.alt = '';
+      mark.width = 36;
+      mark.height = 36;
+      tag.prepend(mark);
+      tag.style.display = 'inline-flex';
+      tag.style.alignItems = 'center';
+      tag.style.gap = '0.6rem';
+      tag.style.background = 'transparent';
+      tag.style.border = '0';
+      tag.style.color = 'var(--color-ink)';
+      tag.style.padding = '0';
+    }
+    if (mark) mark.src = src;
+
+    document.querySelectorAll('.logo-proto-specimen img').forEach((img) => (img.src = src));
+    document.querySelector('.logo-proto-title').textContent = `${key}: ${v.name}`;
+    document.querySelector('.logo-proto-note').textContent = v.note;
+    document.querySelector('.logo-proto-label').innerHTML =
+      `<strong>${key}</strong> (${v.name}) · ${keys.indexOf(key) + 1}/${keys.length}`;
+
+    const url = new URL(location.href);
+    url.searchParams.set('variant', key);
+    history.replaceState(null, '', url);
+  };
+
+  const go = (step) => {
+    key = keys[(keys.indexOf(key) + step + keys.length) % keys.length];
+    render();
+  };
+
+  document.querySelectorAll('.logo-proto-switcher [data-step]').forEach((b) =>
+    b.addEventListener('click', () => go(Number(b.dataset.step))),
+  );
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest?.('input, textarea, [contenteditable]')) return;
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(1);
+  });
+  // Carry the variant across internal links so every page can be walked.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href^="/"]');
+    if (!a || a.getAttribute('href').endsWith('.xml')) return;
+    const url = new URL(a.href);
+    url.searchParams.set('variant', key);
+    a.href = url.pathname + url.search + url.hash;
+  });
+
+  render();
+</script>
+
+<style is:global>
+  .logo-proto-mark {
+    image-rendering: pixelated;
+  }
+  .logo-proto-switcher,
+  .logo-proto-specimen {
+    position: fixed;
+    z-index: 9999;
+    font: 13px/1.35 -apple-system, system-ui, sans-serif;
+    color: #111;
+    background: rgb(255 255 255 / 0.95);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
+  }
+  .logo-proto-switcher {
+    /* Clear of Astro's dev toolbar, which also docks bottom-centre. */
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .logo-proto-switcher button {
+    all: unset;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #111;
+    color: #fff;
+  }
+  .logo-proto-specimen {
+    right: 16px;
+    top: 96px;
+    width: 300px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .logo-proto-title {
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .logo-proto-note {
+    margin: 0 0 12px;
+    color: #555;
+  }
+  .logo-proto-tabs {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .logo-proto-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px 8px 0 0;
+    font-size: 12px;
+  }
+  .logo-proto-tab.dark {
+    background: #35363a;
+    color: #e8eaed;
+  }
+  .logo-proto-tab.light {
+    background: #ffffff;
+    color: #202124;
+    box-shadow: inset 0 0 0 1px #dadce0;
+  }
+  .logo-proto-sizes {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #222;
+  }
+  .logo-proto-sizes figure {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+  .logo-proto-sizes img {
+    image-rendering: pixelated;
+  }
+  .logo-proto-sizes .ios img {
+    border-radius: 22%;
+    width: 72px;
+    height: 72px;
+  }
+  .logo-proto-sizes figcaption {
+    font-size: 10px;
+    color: #aaa;
+  }
+</style>
