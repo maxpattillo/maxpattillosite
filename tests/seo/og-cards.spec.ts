@@ -80,7 +80,7 @@ describe('share cards are current', () => {
 
   it('the favicon matches the generator', () => {
     // An SVG is text, so it is compared exactly. It is drawn in the same pixel
-    // font and lime as the cards, and this keeps the two from drifting apart.
+    // font and accent as the cards, and this keeps the two from drifting apart.
     expect(readFileSync(resolve(PUBLIC, 'favicon.svg'), 'utf8'), `favicon ${STALE}`).toBe(
       renderFavicon(),
     );

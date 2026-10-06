@@ -15,6 +15,12 @@
  *     only nodes describing their own content.
  *   - Exactly one <main> exists, and it is here.
  */
+/*
+ * Self-hosted variable fonts. Each package declares per-script unicode-range
+ * subsets, so a page in English downloads only the latin files.
+ */
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 
 // Build-time, public, and optional. See the note on `env` in astro.config.ts.

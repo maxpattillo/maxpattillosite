@@ -7,7 +7,7 @@
  * the committed PNG -- which is the whole reason the cards can be generated
  * artefacts without silently going stale when an article title changes.
  *
- * The favicon is drawn here too, from the same font and the same lime, so the
+ * The favicon is drawn here too, from the same font and the same accent, so the
  * tab and the link preview cannot drift apart.
  *
  * Nothing here touches the filesystem except reading global.css for the
@@ -98,13 +98,7 @@ const COLOR = {
   surface: token('surface'),
   surfaceRaised: token('surface-raised'),
   ink: token('ink'),
-  /*
-   * NOT A TOKEN YET. The agreed direction is an acid-lime accent, but the
-   * site's `--color-accent` is still the neutral placeholder until the design
-   * prototype lands. The card and favicon carry the direction now; when the
-   * token becomes lime, read it here and delete this line.
-   */
-  lime: oklchToHex(0.92, 0.22, 125),
+  accent: token('accent'),
 };
 
 /* ---- The name: read, not retyped --------------------------------------- */
@@ -253,7 +247,7 @@ function drawLines(card, lines, y, scale, step, fill, label) {
 }
 
 /**
- * The page, the lime shadow, and the bordered block, centred on the card
+ * The page, the accent shadow, and the bordered block, centred on the card
  * around a content box of `contentW` x `contentH`. Returns the content box's
  * top edge; the caller sets the type inside it.
  */
@@ -273,7 +267,7 @@ function drawBlock(card, contentW, contentH) {
   const y = Math.round((CARD_H - h - SHADOW) / 2);
 
   rect(card, 0, 0, CARD_W, CARD_H, COLOR.surface);
-  rect(card, x + SHADOW, y + SHADOW, w, h, COLOR.lime);
+  rect(card, x + SHADOW, y + SHADOW, w, h, COLOR.accent);
   rect(card, x, y, w, h, COLOR.ink);
   rect(card, x + BORDER, y + BORDER, w - 2 * BORDER, h - 2 * BORDER, COLOR.surfaceRaised);
 
@@ -413,7 +407,7 @@ export function renderArticleCard({ title }) {
   const top = drawBlock(card, SAFE_MEASURE, titleH + BYLINE_GAP + bylineH);
 
   const titleBottom = drawLines(card, fit.lines, top, fit.scale, fit.step, COLOR.ink, 'the title line');
-  drawLines(card, [NAME], titleBottom + BYLINE_GAP, BYLINE_SCALE, 0, COLOR.lime, 'the byline');
+  drawLines(card, [NAME], titleBottom + BYLINE_GAP, BYLINE_SCALE, 0, COLOR.accent, 'the byline');
 
   return toSvg(card);
 }
@@ -421,7 +415,7 @@ export function renderArticleCard({ title }) {
 /* ---- The favicon -------------------------------------------------------- */
 
 /**
- * A lime square with the Owner's initials in black.
+ * An accent square with the Owner's initials in black.
  *
  * Two 5x7 glyphs and their one-unit gap are 11 units wide, so a 15-unit square
  * centres them exactly with 2 units either side and 4 above and below. An even
@@ -439,7 +433,7 @@ export function renderFavicon() {
     .join('');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
-<rect width="${size}" height="${size}" fill="${COLOR.lime}"/>
+<rect width="${size}" height="${size}" fill="${COLOR.accent}"/>
 <path d="${d}" fill="${COLOR.surface}"/>
 </svg>
 `;

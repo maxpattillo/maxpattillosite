@@ -42,9 +42,9 @@ const description =
     articles.length === 0 ? (
       <p class="text-ink-muted">Nothing here yet.</p>
     ) : (
-      <ul class="mt-12 space-y-10">
+      <ul class="mt-12 space-y-8">
         {articles.map((article) => (
-          <li>
+          <li class="panel px-6 py-5">
             <h2 class="text-heading">
               <a href={articlePath(article.id)} class="text-ink no-underline hover:text-accent-hover">
                 {article.data.title}

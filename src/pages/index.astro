@@ -2,16 +2,39 @@
 /**
  * The homepage.
  *
- * Deliberately almost empty. There is nothing published yet, and a homepage
- * that pretended otherwise would be the first thing on the site that was not
- * true. Writing arrives under /writing/, which the header links on every page.
+ * Deliberately almost empty: a greeting, the name, and a tile for every real
+ * destination. There is nothing published yet, and a homepage that pretended
+ * otherwise would be the first thing on the site that was not true.
+ *
+ * The tiles are built from the same navigation and profile data as the header
+ * and footer, so they cannot point anywhere those do not.
  *
  * The description names CloseBot and the lede does not. The description is
  * metadata for a search result, where one fact helps someone decide whether
  * this is the Max Pattillo they meant; the page itself just says hello.
  */
 import PageLayout from '../layouts/PageLayout.astro';
+import { footerNav, primaryNav } from '../data/navigation';
 import { person } from '../data/person';
+
+interface Tile {
+  readonly label: string;
+  readonly href: string;
+  readonly note?: string;
+  readonly rel?: string;
+}
+
+const tiles: Tile[] = [
+  ...primaryNav.map((item) => ({ label: item.label, href: item.href, note: item.description })),
+  ...footerNav.map((item) => ({ label: item.label, href: item.href, note: 'How this site is built' })),
+  ...person.socialProfiles.map((profile) => ({
+    label: `${profile.label} ↗`,
+    href: profile.url,
+    note: 'Code',
+    rel: 'me noopener',
+  })),
+  { label: 'RSS', href: '/rss.xml', note: 'Get new Articles' },
+];
 ---
 
 <PageLayout
@@ -22,4 +45,18 @@ import { person } from '../data/person';
   heading={person.name}
   lede="Hello there."
   register="display"
-/>
+  width="wide"
+>
+  <ul class="sticker-grid mt-14 grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-6">
+    {
+      tiles.map((tile) => (
+        <li>
+          <a href={tile.href} rel={tile.rel} class="panel sticker">
+            <span class="text-heading">{tile.label}</span>
+            <span class="font-mono text-kicker uppercase">{tile.note}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</PageLayout>
