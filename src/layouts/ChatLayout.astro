@@ -1,0 +1,42 @@
+---
+/**
+ * The homepage: the header, then the CloseBot chat open in a frame that fills
+ * the rest of the screen. The footer follows below the fold.
+ *
+ * Chosen by prototype on 2026-11-05 ("Framed window"); the other shapes live
+ * on the `prototype/chat-home` branch.
+ *
+ * HOW THE CHAT GETS HERE. cb.js has an embed mode: an element with id
+ * `cb-widget-container` makes it mount its panel inside that element, already
+ * open, with no launcher. The frame below is that element, so this adds no
+ * script -- the budget in AGENTS.md is unchanged.
+ *
+ * THE FALLBACK. Whatever is slotted in renders inside the frame and is hidden,
+ * by CSS alone, once the panel arrives (see closebot-widget.css). With
+ * JavaScript off, with the widget blocked or down, or in a build without
+ * CLOSEBOT_SOURCE, it simply stays. So the page is never an empty box, and
+ * crawlers always get real links.
+ *
+ * Owns the single <h1>, as every layout does. It is visually hidden: the
+ * header already shows the name, and the chat is the page.
+ */
+import BaseLayout from './BaseLayout.astro';
+import type { HeadedLayoutProps } from './types';
+
+type Props = Omit<HeadedLayoutProps, 'register' | 'kicker' | 'width' | 'fill'>;
+
+const { heading, lede, ...base } = Astro.props;
+---
+
+<BaseLayout {...base} width="wide" fill>
+  <slot name="head" slot="head" />
+
+  <h1 class="sr-only">{heading}</h1>
+
+  <div id="cb-widget-container" class="chat-frame panel panel-accent min-h-0 flex-1">
+    <div class="chat-fallback flex h-full flex-col justify-center overflow-y-auto p-[clamp(1.5rem,5vw,3.5rem)]">
+      {lede && <p class="tag -rotate-2 self-start">{lede}</p>}
+      <slot />
+    </div>
+  </div>
+</BaseLayout>

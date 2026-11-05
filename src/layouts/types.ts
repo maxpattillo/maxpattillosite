@@ -37,6 +37,14 @@ export interface BaseLayoutProps {
    * one is present. Pages using it must restore the measure themselves.
    */
   width?: 'content' | 'wide' | 'full';
+
+  /**
+   * Header and <main> together fill exactly one viewport, and <main> becomes a
+   * flex column whose children can take the remaining height. The footer
+   * follows below the fold. For a page whose content is one tall surface --
+   * the homepage chat -- rather than a document that scrolls.
+   */
+  fill?: boolean;
 }
 
 /**
