@@ -24,7 +24,7 @@ Read these before editing anything. Most of what they describe fails the build:
 | --- | --- |
 | [AGENTS.md](./AGENTS.md) | Rendering, metadata, URLs, structured data, links, the JavaScript budget, content |
 | [DESIGN.md](./DESIGN.md) | The visual rules |
-| [CONTEXT.md](./CONTEXT.md) | The domain vocabulary: Owner, CloseBot, Origin project, Article |
+| [GLOSSARY.md](./GLOSSARY.md) | The domain vocabulary: Owner, CloseBot, Origin project, Article |
 
 1. **Run `pnpm test` before you claim anything works.** It is
    `check` → `build` → the SEO suite, and it asserts against *real build
