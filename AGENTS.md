@@ -172,8 +172,11 @@ or a font CDN.
 The terms of the exception:
 
 - It is `async`, so it never blocks parsing or rendering.
-- Nothing on the site depends on it. If it fails to load, no content and no
-  navigation is affected.
+- Nothing on the site depends on it. The homepage leads with it -- the panel
+  is embedded open in the page (`ChatLayout`) -- but the frame it mounts into
+  carries a fallback of real content and links, hidden by CSS only once the
+  panel arrives. If it fails to load, that fallback stays, and no other
+  content or navigation is affected.
 - It is the only script whose cost is **not** under our control, which makes it
   the first thing to examine if the Lighthouse performance budget slips.
 - `tests/e2e/no-js.spec.ts` allowlists its origin by name. A second third-party

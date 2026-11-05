@@ -41,7 +41,9 @@ test('the header stays one line on a 375px phone', async ({ page }) => {
    * doubles in height and takes that space from every screen of every page --
    * see the note in Header.astro for what to do instead.
    */
-  const header = page.locator('body > header');
+  // The banner landmark, not `body > header`: on the homepage the header sits
+  // inside the one-screen wrapper that BaseLayout's `fill` adds.
+  const header = page.getByRole('banner');
   const name = header.getByRole('link', { name: SITE_NAME });
   const nav = header.getByRole('navigation', { name: 'Primary' });
 

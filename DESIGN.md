@@ -8,6 +8,11 @@ compared on the real pages, and the Owner picked **"Sticker board"** with a
 **smoke** accent. The losing shells and the accent rounds live on the
 `prototype/neobrutalism-site` branch.
 
+The homepage became chat-first by prototype on 2026-11-05: the header, then
+the CloseBot chat open in a `.panel-accent` frame filling the rest of the
+screen, with the footer below the fold ("Framed window"). The other shapes
+live on the `prototype/chat-home` branch.
+
 ## The direction
 
 - **Dark-only.** One palette. No light theme, no `prefers-color-scheme` branch,
@@ -60,9 +65,9 @@ Defined in `global.css`, `@layer components`.
 | `.panel` | Ink border and ink offset shadow. The basic unit |
 | `.panel-accent` | The panel's shadow in the accent. One per page, on the lead panel |
 | `.button`, `.button-ghost` | Mono, uppercase, pressable. Accent-filled, or surface-filled |
-| `.tag` | A small accent-filled mono label: the homepage greeting |
+| `.tag` | A small accent-filled mono label: the greeting in the homepage chat's fallback |
 | `.highlight` | The accent band behind a reading-register title |
-| `.sticker`, `.sticker-grid` | Homepage navigation tiles, tilted by position |
+| `.sticker`, `.sticker-grid` | Navigation tiles, tilted by position: the homepage chat's fallback |
 
 The header is a floating panel with the mark beside the name and the nav as
 ghost buttons. The footer is the one large accent slab, with dark chips for links.

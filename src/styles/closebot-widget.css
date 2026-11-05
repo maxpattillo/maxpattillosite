@@ -270,3 +270,24 @@ body .cb-status-btn:focus-visible {
   outline-offset: 2px !important;
   border-radius: 2px !important;
 }
+
+/* ---- Embedded on the homepage ------------------------------------------ */
+
+/*
+ * In ChatLayout the panel mounts inside `.chat-frame`, which is already a
+ * `.panel` with the page's border and accent shadow. The widget's own border
+ * and shadow would draw a second frame inside the first.
+ */
+body .chat-frame .cb-panel {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+ * The fallback (greeting and tiles) stays until the widget's panel is in the
+ * frame, then gets out of the way. Pure CSS, so it needs no script of ours --
+ * and if the panel never arrives, the fallback simply never leaves.
+ */
+.chat-frame:has(> .cb-panel) > .chat-fallback {
+  display: none;
+}

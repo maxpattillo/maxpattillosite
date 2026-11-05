@@ -55,6 +55,7 @@ const {
   datePublished,
   dateModified,
   width = 'content',
+  fill = false,
 } = Astro.props;
 
 // Narrow Astro.site for the rest of the file. resolveSeo checks this too, but
@@ -143,9 +144,11 @@ const measure =
       `async` so it never blocks parsing or rendering, and `is:inline` so Astro
       leaves the external src alone rather than trying to bundle it.
 
-      Nothing on the site depends on it. It has no .cb-widget-container to bind
-      to, so it mounts its own floating widget; if it fails to load, no content
-      and no navigation is affected.
+      Where a page has an element with id `cb-widget-container` (the homepage,
+      via ChatLayout), cb.js mounts the panel inside it, already open, with no
+      launcher. Everywhere else it mounts its own floating widget. Nothing
+      depends on it loading: the homepage frame carries a fallback that shows
+      until the panel arrives, and no other content or navigation is affected.
 
       RENDERED ONLY WHEN AN ACCOUNT IS CONFIGURED. `CLOSEBOT_SOURCE` is a build
       variable, not a hard-coded id -- see the long note in astro.config.ts for
@@ -171,25 +174,31 @@ const measure =
   <body class="flex min-h-screen flex-col">
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <Header />
+    {/*
+      `contents` is a no-op wrapper, so pages without `fill` lay out exactly as
+      if it were not there. With `fill` it holds header and main to one screen.
+    */}
+    <div class={fill ? 'flex h-dvh flex-col' : 'contents'}>
+      <Header />
 
-    <main id="main" class={`flex-1 ${measure}`}>
-      {
-        /*
-         * In 'full' the main element has no gutter, so the trail has to carry
-         * its own or it sits flush against the viewport edge.
-         */
-        hasBreadcrumb &&
-          (width === 'full' ? (
-            <div class="mx-auto w-full max-w-wide px-gutter pt-8">
+      <main id="main" class:list={['flex-1', measure, fill && 'flex min-h-0 flex-col']}>
+        {
+          /*
+           * In 'full' the main element has no gutter, so the trail has to carry
+           * its own or it sits flush against the viewport edge.
+           */
+          hasBreadcrumb &&
+            (width === 'full' ? (
+              <div class="mx-auto w-full max-w-wide px-gutter pt-8">
+                <Breadcrumbs items={crumbs} />
+              </div>
+            ) : (
               <Breadcrumbs items={crumbs} />
-            </div>
-          ) : (
-            <Breadcrumbs items={crumbs} />
-          ))
-      }
-      <slot />
-    </main>
+            ))
+        }
+        <slot />
+      </main>
+    </div>
 
     <Footer />
   </body>
